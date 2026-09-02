@@ -1,0 +1,40 @@
+from fastapi import FastAPI
+
+from backend.app.core.config import settings
+from backend.app.api.users import router as users_router
+
+from backend.app.core.exceptions import (
+    UserNotFoundException,
+    EmailAlreadyRegisteredException,
+)
+
+from backend.app.core.exception_handlers import (
+    user_not_found_handler,
+    email_already_registered_handler,
+)
+
+
+app = FastAPI(
+    title="MurphAI",
+    description="AI-powered intelligent system",
+    version="0.1.0",
+)
+
+app.add_exception_handler(
+    UserNotFoundException,
+    user_not_found_handler,
+)
+
+app.add_exception_handler(
+    EmailAlreadyRegisteredException,
+    email_already_registered_handler,
+)
+
+app.include_router(users_router)
+
+
+@app.get("/")
+def root():
+    return {
+        "message": f"{settings.app_name} is running",
+    }
