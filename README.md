@@ -1,117 +1,107 @@
-# MurphAI
+# 🧠 MurphAI
 
-> An AI-powered intelligent platform designed to understand, analyze, automate, and assist with real-world tasks.
+> **An engineering-focused AI platform designed to evolve from a reliable backend foundation into an intelligent system capable of understanding user intent, working with information, interacting with external services, reasoning over data, and assisting with real-world workflows.**
 
-MurphAI is a long-term AI engineering project focused on building a modular and production-oriented intelligent platform.
+<p align="center">
 
-The project combines:
+![Python](https://img.shields.io/badge/Python-3.x-3776AB?style=for-the-badge&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-API-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Database-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-Containerization-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Pytest](https://img.shields.io/badge/Pytest-Testing-0A9EDC?style=for-the-badge&logo=pytest&logoColor=white)
+![Alembic](https://img.shields.io/badge/Alembic-Migrations-6BA81E?style=for-the-badge)
+![License](https://img.shields.io/badge/License-MIT-green?style=for-the-badge)
+
+</p>
+
+<p align="center">
+
+**Backend Engineering • Artificial Intelligence • Automation • Cloud Infrastructure • DevOps • Observability • Security**
+
+</p>
+
+---
+
+# 📌 Table of Contents
+
+- [What is MurphAI?](#-what-is-murphai)
+- [Why MurphAI?](#-why-murphai)
+- [What Does MurphAI Actually Do?](#-what-does-murphai-actually-do)
+- [Current Project Status](#-current-project-status)
+- [Vision](#-vision)
+- [Core Capabilities](#-core-capabilities)
+- [System Architecture](#-system-architecture)
+- [Project Architecture](#-project-architecture)
+- [Repository Structure](#-repository-structure)
+- [Technology Stack](#-technology-stack)
+- [Backend Architecture](#-backend-architecture)
+- [Authentication](#-authentication)
+- [Database](#-database)
+- [API](#-api)
+- [Testing](#-testing)
+- [Environment Configuration](#-environment-configuration)
+- [Local Development](#-local-development)
+- [Running the Project](#-running-the-project)
+- [Docker](#-docker)
+- [Database Migrations](#-database-migrations)
+- [Development Workflow](#-development-workflow)
+- [Engineering Principles](#-engineering-principles)
+- [Security](#-security)
+- [Observability](#-observability)
+- [AI Architecture](#-ai-architecture)
+- [Future Roadmap](#-future-roadmap)
+- [MurphAI Evolution](#-murphai-evolution)
+- [Use Cases](#-use-cases)
+- [Production Vision](#-production-vision)
+- [Why This Project Matters](#-why-this-project-matters)
+- [Learning Objectives](#-learning-objectives)
+- [Contributing](#-contributing)
+- [License](#-license)
+- [Author](#-author)
+
+---
+
+# 🧠 What is MurphAI?
+
+**MurphAI** is an engineering-focused AI platform being built with a long-term goal of combining:
 
 - Artificial Intelligence
-- Large Language Models
 - Backend Engineering
+- Data
 - APIs
-- Databases
-- Machine Learning
-- Cloud Infrastructure
 - Automation
+- Cloud Infrastructure
 - DevOps
-- Observability
-- Secure Software Engineering
-
-The goal is not to build another simple chatbot.
-
-MurphAI is being developed as an engineering-focused AI platform that can gradually evolve from a reliable backend foundation into an intelligent system capable of understanding user intent, working with information, interacting with external services, reasoning over data, and assisting with real-world workflows.
-
----
-
-## 🚀 Vision
-
-The long-term vision of MurphAI is to build a practical digital intelligence platform rather than a simple text-generation application.
-
-MurphAI is intended to evolve toward a system that can:
-
-- Understand natural-language requests
-- Maintain useful context
-- Analyze structured and unstructured information
-- Interact with APIs and external services
-- Retrieve relevant information
-- Reason over available data
-- Automate repetitive workflows
-- Assist users in completing tasks
-- Provide actionable recommendations
-- Learn from feedback and usage patterns
-- Execute controlled workflows safely
-- Operate through modular services
-- Scale using cloud-native infrastructure
-
-The system will be developed incrementally.
-
-The first priority is building a strong and reliable engineering foundation.
-
----
-
-# 🎯 Problem
-
-Modern AI applications can generate impressive responses, but building a genuinely useful AI platform requires much more than connecting an application to an LLM.
-
-A production-oriented AI system requires multiple engineering layers:
-
-- Reliable backend APIs
-- Authentication and authorization
-- Persistent data storage
-- Database migrations
-- Input validation
-- Secure configuration
-- Automated testing
-- Logging and monitoring
-- AI/ML pipelines
-- External service integrations
-- Workflow orchestration
-- Containerization
-- Cloud infrastructure
-- CI/CD
-- Scalability
 - Security
+- Observability
+- Intelligent workflows
 
-MurphAI is being built to explore these engineering challenges together.
+The project is intentionally being developed as a **real software system**, rather than simply creating a chatbot interface.
+
+The foundation begins with a clean, modular backend architecture and is designed to evolve gradually toward an intelligent AI platform.
 
 ---
 
-# 🧠 What Is MurphAI?
+# 🎯 What Does MurphAI Actually Do?
 
-MurphAI is planned as a modular intelligent platform.
+## Current Version
 
-At a high level, the system is envisioned as:
+At its current stage, MurphAI provides the **backend foundation required for an intelligent platform**.
+
+The current system focuses on:
 
 ```text
-                         ┌─────────────────────┐
-                         │        User         │
-                         └──────────┬──────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │      MurphAI       │
-                         │   AI Interface     │
-                         └──────────┬──────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    │               │               │
-                    ▼               ▼               ▼
-             ┌────────────┐ ┌────────────┐ ┌────────────┐
-             │    LLM     │ │ Knowledge  │ │  Workflow  │
-             │   Engine   │ │   System   │ │ Automation │
-             └────────────┘ └────────────┘ └────────────┘
-                    │               │               │
-                    └───────────────┼───────────────┘
-                                    │
-                                    ▼
-                         ┌─────────────────────┐
-                         │    Backend APIs     │
-                         └──────────┬──────────┘
-                                    │
-                    ┌───────────────┼───────────────┐
-                    ▼               ▼               ▼
-              ┌──────────┐   ┌────────────┐   ┌───────────┐
-              │ Database │   │ External   │   │ Services  │
-              │          │   │ APIs       │   │           │
-              └──────────┘   └────────────┘   └───────────┘
+                    ┌───────────────────────┐
+                    │       MurphAI         │
+                    │     API Platform      │
+                    └───────────┬───────────┘
+                                │
+                 ┌──────────────┼──────────────┐
+                 │              │              │
+                 ▼              ▼              ▼
+             Authentication   Users        Database
+                 │              │              │
+                 └──────────────┼──────────────┘
+                                │
+                                ▼
+                         Backend Services
