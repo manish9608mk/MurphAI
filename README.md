@@ -2034,10 +2034,10 @@ The long-term MurphAI architecture can be summarized as:
 
 
        ┌─────────────────────────────────────────────────────┐
-       │                 PLATFORM FOUNDATION                  │
+       │                 PLATFORM FOUNDATION                 │
        │                                                     │
-       │  Docker • Cloud • CI/CD • Monitoring • Security    │
-       │  Terraform • Kubernetes • Prometheus • Grafana     │
+       │  Docker • Cloud • CI/CD • Monitoring • Security     │
+       │  Terraform • Kubernetes • Prometheus • Grafana      │
        │                                                     │
        └─────────────────────────────────────────────────────┘
 ```
