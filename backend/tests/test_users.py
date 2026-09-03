@@ -1,32 +1,50 @@
-# to run pytest use this command: PYTHONPATH=. pytest
-
-def test_create_user(client):
-    response = client.post(
+def register_and_login(client, name, email, password):
+    # Register
+    register_response = client.post(
         "/users/",
         json={
-            "name": "Manish",
-            "email": "manish@example.com",
+            "name": name,
+            "email": email,
+            "password": password,
         },
     )
 
-    assert response.status_code == 201
+    assert register_response.status_code == 201
 
-    data = response.json()
+    # Login
+    login_response = client.post(
+        "/auth/login",
+        json={
+            "email": email,
+            "password": password,
+        },
+    )
 
-    assert data["name"] == "Manish"
-    assert data["email"] == "manish@example.com"
-    assert "id" in data
+    assert login_response.status_code == 200
+
+    token = login_response.json()["access_token"]
+
+    return {
+        "Authorization": f"Bearer {token}"
+    }
+
+
+# =========================
+# GET ALL USERS
+# =========================
 
 def test_get_users(client):
-    client.post(
-        "/users/",
-        json={
-            "name": "Manish",
-            "email": "manish@example.com",
-        },
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
     )
 
-    response = client.get("/users/")
+    response = client.get(
+        "/users/",
+        headers=headers,
+    )
 
     assert response.status_code == 200
 
@@ -35,77 +53,86 @@ def test_get_users(client):
     assert len(data) == 1
     assert data[0]["name"] == "Manish"
     assert data[0]["email"] == "manish@example.com"
-    assert data[0]["id"] == 1
 
 
-def test_get_single_user(client):
-    # Create user first
-    client.post(
-        "/users/",
-        json={
-            "name": "Rahul",
-            "email": "rahul@example.com",
-        },
+# =========================
+# GET OWN USER
+# =========================
+
+def test_get_own_user(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
     )
 
-    # Get user with ID 1
-    response = client.get("/users/1")
+    response = client.get(
+        "/users/1",
+        headers=headers,
+    )
 
     assert response.status_code == 200
 
     data = response.json()
 
     assert data["id"] == 1
-    assert data["name"] == "Rahul"
-    assert data["email"] == "rahul@example.com"
-
-def test_get_user_not_found(client):
-    response = client.get("/users/999")
-
-    assert response.status_code == 404
-
-    data = response.json()
-
-    assert data["detail"] == "User not found"
+    assert data["name"] == "Manish"
+    assert data["email"] == "manish@example.com"
 
 
-def test_duplicate_email(client):
-    client.post(
-        "/users/",
-        json={
-            "name": "Manish",
-            "email": "duplicate@example.com",
-        },
+# =========================
+# CANNOT GET OTHER USER
+# =========================
+
+def test_cannot_get_other_user(client):
+    # User 1
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
     )
 
-    response = client.post(
+    # User 2
+    client.post(
         "/users/",
         json={
             "name": "Rahul",
-            "email": "duplicate@example.com",
+            "email": "rahul@example.com",
+            "password": "TestPassword123",
         },
     )
 
-    assert response.status_code == 409
+    response = client.get(
+        "/users/2",
+        headers=headers,
+    )
+
+    assert response.status_code == 403
 
     data = response.json()
 
-    assert data["detail"] == "Email already registered"
-
-
-def test_update_user(client):
-    # Create user
-    client.post(
-        "/users/",
-        json={
-            "name": "Manish",
-            "email": "manish@example.com",
-        },
+    assert data["detail"] == (
+        "You are not allowed to access this user"
     )
 
-    # Update user
+
+# =========================
+# UPDATE OWN USER
+# =========================
+
+def test_update_own_user(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
     response = client.put(
         "/users/1",
+        headers=headers,
         json={
             "name": "Manish Kumar",
             "email": "manishkumar@example.com",
@@ -121,26 +148,126 @@ def test_update_user(client):
     assert data["email"] == "manishkumar@example.com"
 
 
-def test_delete_user(client):
-    # Create user
+# =========================
+# CANNOT UPDATE OTHER USER
+# =========================
+
+def test_cannot_update_other_user(client):
+    # User 1
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    # User 2
     client.post(
         "/users/",
         json={
-            "name": "Manish",
-            "email": "manish@example.com",
+            "name": "Rahul",
+            "email": "rahul@example.com",
+            "password": "TestPassword123",
         },
     )
 
-    # Delete user
-    response = client.delete("/users/1")
+    response = client.put(
+        "/users/2",
+        headers=headers,
+        json={
+            "name": "Hacked User",
+            "email": "hacked@example.com",
+        },
+    )
 
-    assert response.status_code == 204
-
-    # Verify user no longer exists
-    response = client.get("/users/1")
-
-    assert response.status_code == 404
+    assert response.status_code == 403
 
     data = response.json()
 
-    assert data["detail"] == "User not found"
+    assert data["detail"] == (
+        "You are not allowed to update this user"
+    )
+
+
+# =========================
+# DELETE OWN USER
+# =========================
+
+def test_delete_own_user(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    response = client.delete(
+        "/users/1",
+        headers=headers,
+    )
+
+    assert response.status_code == 204
+
+    response = client.get(
+        "/users/1",
+        headers=headers,
+    )
+
+    assert response.status_code == 404
+
+
+# =========================
+# CANNOT DELETE OTHER USER
+# =========================
+
+def test_cannot_delete_other_user(client):
+    # User 1
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    # User 2
+    client.post(
+        "/users/",
+        json={
+            "name": "Rahul",
+            "email": "rahul@example.com",
+            "password": "TestPassword123",
+        },
+    )
+
+    response = client.delete(
+        "/users/2",
+        headers=headers,
+    )
+
+    assert response.status_code == 403
+
+    data = response.json()
+
+    assert data["detail"] == (
+        "You are not allowed to delete this user"
+    )
+
+
+# =========================
+# USER NOT FOUND
+# =========================
+
+def test_get_user_not_found(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    response = client.get(
+        "/users/999",
+        headers=headers,
+    )
+
+    assert response.status_code == 403

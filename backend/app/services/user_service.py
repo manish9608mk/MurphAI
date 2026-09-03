@@ -4,6 +4,8 @@ from sqlalchemy.exc import IntegrityError
 from backend.app.models.user import User
 from backend.app.schemas.user import UserCreate, UserUpdate
 
+from backend.app.core.security import hash_password
+
 from backend.app.core.exceptions import (
     UserNotFoundException,
     EmailAlreadyRegisteredException,
@@ -14,6 +16,7 @@ def create_user(db: Session, user_data: UserCreate):
     user = User(
         name=user_data.name,
         email=user_data.email,
+        password_hash=hash_password(user_data.password),
     )
 
     db.add(user)
@@ -35,7 +38,11 @@ def get_users(db: Session):
 
 
 def get_user(db: Session, user_id: int):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .first()
+    )
 
     if not user:
         raise UserNotFoundException()
@@ -48,7 +55,11 @@ def update_user(
     user_id: int,
     user_data: UserUpdate,
 ):
-    user = db.query(User).filter(User.id == user_id).first()
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .first()
+    )
 
     if not user:
         raise UserNotFoundException()
@@ -68,8 +79,15 @@ def update_user(
     return user
 
 
-def delete_user(db: Session, user_id: int):
-    user = db.query(User).filter(User.id == user_id).first()
+def delete_user(
+    db: Session,
+    user_id: int,
+):
+    user = (
+        db.query(User)
+        .filter(User.id == user_id)
+        .first()
+    )
 
     if not user:
         raise UserNotFoundException()

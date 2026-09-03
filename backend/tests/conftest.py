@@ -8,17 +8,21 @@ from fastapi.testclient import TestClient
 
 from backend.app.main import app
 from backend.app.database.database import Base
-from backend.app.api.users import get_db
+
+from backend.app.core.dependencies import get_db
 
 
-# Test database
 SQLALCHEMY_DATABASE_URL = "sqlite://"
+
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
+    connect_args={
+        "check_same_thread": False,
+    },
     poolclass=StaticPool,
 )
+
 
 TestingSessionLocal = sessionmaker(
     autocommit=False,
@@ -27,11 +31,9 @@ TestingSessionLocal = sessionmaker(
 )
 
 
-# Create test tables
 Base.metadata.create_all(bind=engine)
 
 
-# Override the application's database dependency
 def override_get_db():
     db = TestingSessionLocal()
 
@@ -57,4 +59,3 @@ def clean_database():
     yield
 
     Base.metadata.drop_all(bind=engine)
-    

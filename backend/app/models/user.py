@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String
+
 from backend.app.database.database import Base
 
 
@@ -21,4 +22,9 @@ class User(Base):
         unique=True,
         nullable=False,
         index=True,
+    )
+
+    password_hash = Column(
+        String,
+        nullable=False,
     )
