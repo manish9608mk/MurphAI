@@ -15,6 +15,8 @@ from backend.app.api.skills import router as skills_router
 from backend.app.api.assignments import router as assignments_router
 from backend.app.api.work import router as work_router
 from backend.app.api.evidence import router as evidence_router
+from backend.app.api.confirmation import router as confirmation_router
+from backend.app.api.payment import router as payment_router
 
 
 # ============================================================
@@ -191,6 +193,8 @@ app.include_router(skills_router)
 app.include_router(assignments_router)
 app.include_router(work_router)
 app.include_router(evidence_router)
+app.include_router(confirmation_router)
+app.include_router(payment_router)
 
 
 # ============================================================
