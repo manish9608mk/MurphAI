@@ -1,9 +1,14 @@
 from fastapi import Depends, HTTPException, status
+
 from sqlalchemy.orm import Session
 
-from backend.app.core.exceptions import WorkerNotFoundException
+from backend.app.core.exceptions import (
+    WorkerNotFoundException,
+    AssignmentNotFoundException,
+)
 from backend.app.core.security import get_current_user_id
 from backend.app.database.database import SessionLocal
+from backend.app.models.assignment import Assignment
 from backend.app.models.job import Job
 from backend.app.models.worker import Worker
 
@@ -29,12 +34,17 @@ def verify_user_access(action: str):
 
     def dependency(
         user_id: int,
-        current_user_id: int = Depends(get_current_user_id),
+        current_user_id: int = Depends(
+            get_current_user_id
+        ),
     ):
         if user_id != current_user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"You are not allowed to {action} this user",
+                detail=(
+                    f"You are not allowed to "
+                    f"{action} this user"
+                ),
             )
 
         return current_user_id
@@ -51,7 +61,9 @@ def verify_job_access(action: str):
     def dependency(
         job_id: int,
         db: Session = Depends(get_db),
-        current_user_id: int = Depends(get_current_user_id),
+        current_user_id: int = Depends(
+            get_current_user_id
+        ),
     ):
         job = (
             db.query(Job)
@@ -68,7 +80,10 @@ def verify_job_access(action: str):
         if job.customer_id != current_user_id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"You are not allowed to {action} this job",
+                detail=(
+                    f"You are not allowed to "
+                    f"{action} this job"
+                ),
             )
 
         return current_user_id
@@ -85,7 +100,9 @@ def verify_worker_access(action: str):
     def dependency(
         worker_id: int,
         db: Session = Depends(get_db),
-        current_user_id: int = Depends(get_current_user_id),
+        current_user_id: int = Depends(
+            get_current_user_id
+        ),
     ):
         worker = (
             db.query(Worker)
@@ -102,6 +119,109 @@ def verify_worker_access(action: str):
                 detail=(
                     f"You are not allowed to "
                     f"{action} this worker profile"
+                ),
+            )
+
+        return current_user_id
+
+    return dependency
+
+
+def verify_assignment_customer_access(
+    action: str,
+):
+    """
+    Only the customer who owns the job
+    can perform the customer-side action.
+    """
+
+    def dependency(
+        assignment_id: int,
+        db: Session = Depends(get_db),
+        current_user_id: int = Depends(
+            get_current_user_id
+        ),
+    ):
+        assignment = (
+            db.query(Assignment)
+            .filter(
+                Assignment.id == assignment_id
+            )
+            .first()
+        )
+
+        if not assignment:
+            raise AssignmentNotFoundException()
+
+        job = (
+            db.query(Job)
+            .filter(Job.id == assignment.job_id)
+            .first()
+        )
+
+        if not job:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Job not found",
+            )
+
+        if job.customer_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    f"You are not allowed to "
+                    f"{action} this assignment"
+                ),
+            )
+
+        return current_user_id
+
+    return dependency
+
+
+def verify_assignment_worker_access(
+    action: str,
+):
+    """
+    Only the worker who owns the worker profile
+    can perform the worker-side action.
+    """
+
+    def dependency(
+        assignment_id: int,
+        db: Session = Depends(get_db),
+        current_user_id: int = Depends(
+            get_current_user_id
+        ),
+    ):
+        assignment = (
+            db.query(Assignment)
+            .filter(
+                Assignment.id == assignment_id
+            )
+            .first()
+        )
+
+        if not assignment:
+            raise AssignmentNotFoundException()
+
+        worker = (
+            db.query(Worker)
+            .filter(
+                Worker.id == assignment.worker_id
+            )
+            .first()
+        )
+
+        if not worker:
+            raise WorkerNotFoundException()
+
+        if worker.user_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    f"You are not allowed to "
+                    f"{action} this assignment"
                 ),
             )
 

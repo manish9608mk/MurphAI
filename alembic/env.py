@@ -13,6 +13,9 @@ from backend.app.database.database import Base
 # Import your models so SQLAlchemy knows about them
 from backend.app.models.user import User
 from backend.app.models.job import Job
+from backend.app.models.worker import Worker
+from backend.app.models.skill import Skill
+from backend.app.models.assignment import Assignment
 
 
 # Alembic Config object
