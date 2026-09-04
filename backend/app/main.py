@@ -2,17 +2,25 @@ from fastapi import FastAPI
 
 from backend.app.core.config import settings
 
+# ============================================================
+# API Routers
+# ============================================================
+
 # API routers
 from backend.app.api.users import router as users_router
 from backend.app.api.auth import router as auth_router
 from backend.app.api.jobs import router as jobs_router
 from backend.app.api.workers import router as workers_router
 from backend.app.api.skills import router as skills_router
-from backend.app.api.assignments import (
-    router as assignments_router,
-)
+from backend.app.api.assignments import router as assignments_router
+from backend.app.api.work import router as work_router
+from backend.app.api.evidence import router as evidence_router
 
-# Custom exceptions
+
+# ============================================================
+# Custom Exceptions
+# ============================================================
+
 from backend.app.core.exceptions import (
     UserNotFoundException,
     EmailAlreadyRegisteredException,
@@ -34,7 +42,11 @@ from backend.app.core.exceptions import (
     PermissionDeniedException,
 )
 
-# Exception handlers
+
+# ============================================================
+# Exception Handlers
+# ============================================================
+
 from backend.app.core.exception_handlers import (
     user_not_found_handler,
     email_already_registered_handler,
@@ -72,7 +84,9 @@ app = FastAPI(
 # Exception Handlers
 # ============================================================
 
-# User exceptions
+# -----------------------------
+# User Exceptions
+# -----------------------------
 
 app.add_exception_handler(
     UserNotFoundException,
@@ -85,7 +99,9 @@ app.add_exception_handler(
 )
 
 
-# Job exceptions
+# -----------------------------
+# Job Exceptions
+# -----------------------------
 
 app.add_exception_handler(
     JobNotFoundException,
@@ -98,7 +114,9 @@ app.add_exception_handler(
 )
 
 
-# Worker exceptions
+# -----------------------------
+# Worker Exceptions
+# -----------------------------
 
 app.add_exception_handler(
     WorkerNotFoundException,
@@ -111,7 +129,9 @@ app.add_exception_handler(
 )
 
 
-# Worker skill exceptions
+# -----------------------------
+# Worker Skill Exceptions
+# -----------------------------
 
 app.add_exception_handler(
     WorkerSkillAlreadyExistsException,
@@ -124,7 +144,9 @@ app.add_exception_handler(
 )
 
 
-# Assignment exceptions
+# -----------------------------
+# Assignment Exceptions
+# -----------------------------
 
 app.add_exception_handler(
     AssignmentNotFoundException,
@@ -147,7 +169,9 @@ app.add_exception_handler(
 )
 
 
-# Permission exception
+# -----------------------------
+# Authorization Exception
+# -----------------------------
 
 app.add_exception_handler(
     PermissionDeniedException,
@@ -160,16 +184,13 @@ app.add_exception_handler(
 # ============================================================
 
 app.include_router(users_router)
-
 app.include_router(auth_router)
-
 app.include_router(jobs_router)
-
 app.include_router(workers_router)
-
 app.include_router(skills_router)
-
 app.include_router(assignments_router)
+app.include_router(work_router)
+app.include_router(evidence_router)
 
 
 # ============================================================
@@ -178,6 +199,10 @@ app.include_router(assignments_router)
 
 @app.get("/")
 def root():
+    """
+    Basic health endpoint for the application.
+    """
+
     return {
         "message": f"{settings.app_name} is running",
     }
