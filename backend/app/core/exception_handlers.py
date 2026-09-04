@@ -4,6 +4,7 @@ from fastapi.responses import JSONResponse
 from backend.app.core.exceptions import (
     UserNotFoundException,
     EmailAlreadyRegisteredException,
+    JobNotFoundException,
 )
 
 
@@ -27,5 +28,17 @@ async def email_already_registered_handler(
         status_code=409,
         content={
             "detail": "Email already registered"
+        },
+    )
+
+
+async def job_not_found_handler(
+    request: Request,
+    exc: JobNotFoundException,
+):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "Job not found"
         },
     )

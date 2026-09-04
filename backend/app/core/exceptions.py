@@ -4,3 +4,7 @@ class UserNotFoundException(Exception):
 
 class EmailAlreadyRegisteredException(Exception):
     pass
+
+
+class JobNotFoundException(Exception):
+    pass
