@@ -1,10 +1,18 @@
 from sqlalchemy.orm import Session
 
 from backend.app.models.job import Job
-from backend.app.schemas.job import JobCreate, JobUpdate
+from backend.app.schemas.job import (
+    JobCreate,
+    JobUpdate,
+)
 
 from backend.app.core.exceptions import (
     JobNotFoundException,
+    InvalidJobStatusTransitionException,
+)
+
+from backend.app.core.job_status import (
+    is_valid_transition,
 )
 
 
@@ -66,7 +74,37 @@ def update_job(
     job.description = job_data.description
     job.location = job_data.location
     job.budget = job_data.budget
-    job.status = job_data.status
+
+    db.commit()
+    db.refresh(job)
+
+    return job
+
+
+def update_job_status(
+    db: Session,
+    job_id: int,
+    new_status: str,
+):
+    job = (
+        db.query(Job)
+        .filter(Job.id == job_id)
+        .first()
+    )
+
+    if not job:
+        raise JobNotFoundException()
+
+    if not is_valid_transition(
+        job.status,
+        new_status,
+    ):
+        raise InvalidJobStatusTransitionException(
+            f"Invalid job status transition: "
+            f"{job.status} -> {new_status}"
+)
+
+    job.status = new_status
 
     db.commit()
     db.refresh(job)

@@ -10,12 +10,14 @@ from backend.app.core.exceptions import (
     UserNotFoundException,
     EmailAlreadyRegisteredException,
     JobNotFoundException,
+    InvalidJobStatusTransitionException,
 )
 
 from backend.app.core.exception_handlers import (
     user_not_found_handler,
     email_already_registered_handler,
     job_not_found_handler,
+    invalid_job_status_transition_handler,
 )
 
 
@@ -39,6 +41,11 @@ app.add_exception_handler(
 app.add_exception_handler(
     JobNotFoundException,
     job_not_found_handler,
+)
+
+app.add_exception_handler(
+    InvalidJobStatusTransitionException,
+    invalid_job_status_transition_handler,
 )
 
 

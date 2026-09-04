@@ -42,6 +42,8 @@ class JobUpdate(BaseModel):
         gt=0,
     )
 
+
+class JobStatusUpdate(BaseModel):
     status: str = Field(
         min_length=1,
         max_length=30,

@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from backend.app.schemas.job import (
     JobCreate,
     JobUpdate,
+    JobStatusUpdate,
     JobResponse,
 )
 
@@ -12,6 +13,7 @@ from backend.app.services.job_service import (
     get_jobs,
     get_job,
     update_job,
+    update_job_status,
     delete_job,
 )
 
@@ -105,4 +107,22 @@ def delete_single_job(
     delete_job(
         db,
         job_id,
+    )
+
+@router.patch(
+    "/{job_id}/status",
+    response_model=JobResponse,
+)
+def update_single_job_status(
+    job_id: int,
+    status_data: JobStatusUpdate,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(
+        verify_job_access("update")
+    ),
+):
+    return update_job_status(
+        db,
+        job_id,
+        status_data.status,
     )

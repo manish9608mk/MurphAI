@@ -5,6 +5,7 @@ from backend.app.core.exceptions import (
     UserNotFoundException,
     EmailAlreadyRegisteredException,
     JobNotFoundException,
+    InvalidJobStatusTransitionException,
 )
 
 
@@ -40,5 +41,17 @@ async def job_not_found_handler(
         status_code=404,
         content={
             "detail": "Job not found"
+        },
+    )
+
+
+async def invalid_job_status_transition_handler(
+    request: Request,
+    exc: InvalidJobStatusTransitionException,
+):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "detail": str(exc),
         },
     )

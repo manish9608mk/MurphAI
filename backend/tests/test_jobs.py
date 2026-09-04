@@ -147,7 +147,6 @@ def test_update_own_job(client):
             "description": "Updated description for electrical repair work.",
             "location": "Indore",
             "budget": 3000,
-            "status": "open",
         },
     )
 
@@ -185,7 +184,6 @@ def test_cannot_update_other_users_job(client):
             "description": "Trying to modify another user's job.",
             "location": "Delhi",
             "budget": 1,
-            "status": "open",
         },
     )
 
@@ -340,3 +338,336 @@ def test_other_user_can_view_job(client):
 
     assert data["id"] == job["id"]
     assert data["customer_id"] == 1
+
+
+def test_job_status_open_to_assigned(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    job = create_job(client, headers)
+
+    response = client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "assigned",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "assigned"
+
+
+def test_job_status_assigned_to_in_progress(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    job = create_job(client, headers)
+
+    client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "assigned",
+        },
+    )
+
+    response = client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "in_progress",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "in_progress"
+
+
+def test_job_status_in_progress_to_completed(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    job = create_job(client, headers)
+
+    client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "assigned",
+        },
+    )
+
+    client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "in_progress",
+        },
+    )
+
+    response = client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "completed",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "completed"
+
+
+# Test cancellation
+def test_job_can_be_cancelled_from_open(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    job = create_job(client, headers)
+
+    response = client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "cancelled",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "cancelled"
+
+
+# OPEN → COMPLETED
+def test_cannot_complete_open_job(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    job = create_job(client, headers)
+
+    response = client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "completed",
+        },
+    )
+
+    assert response.status_code == 400
+
+    data = response.json()
+
+    assert data["detail"] == (
+        "Invalid job status transition: open -> completed"
+    )
+
+
+
+# OPEN → IN_PROGRESS
+def test_cannot_start_open_job(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    job = create_job(client, headers)
+
+    response = client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "in_progress",
+        },
+    )
+
+    assert response.status_code == 400
+
+    data = response.json()
+
+    assert data["detail"] == (
+        "Invalid job status transition: open -> in_progress"
+    )
+
+
+# COMPLETED → OPEN
+def test_cannot_reopen_completed_job(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    job = create_job(client, headers)
+
+    client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "assigned",
+        },
+    )
+
+    client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "in_progress",
+        },
+    )
+
+    client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "completed",
+        },
+    )
+
+    response = client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=headers,
+        json={
+            "status": "open",
+        },
+    )
+
+    assert response.status_code == 400
+
+    data = response.json()
+
+    assert data["detail"] == (
+        "Invalid job status transition: completed -> open"
+    )
+
+
+# Test ownership
+def test_cannot_update_status_of_other_users_job(client):
+    manish_headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    job = create_job(client, manish_headers)
+
+    rahul_headers = register_and_login(
+        client,
+        "Rahul",
+        "rahul@example.com",
+        "TestPassword123",
+    )
+
+    response = client.patch(
+        f"/jobs/{job['id']}/status",
+        headers=rahul_headers,
+        json={
+            "status": "assigned",
+        },
+    )
+
+    assert response.status_code == 403
+
+    data = response.json()
+
+    assert data["detail"] == (
+        "You are not allowed to update this job"
+    )
+
+
+# Test authentication
+def test_update_job_status_requires_authentication(client):
+    response = client.patch(
+        "/jobs/1/status",
+        json={
+            "status": "assigned",
+        },
+    )
+
+    assert response.status_code == 401
+
+
+
+# Test nonexistent job
+def test_update_status_job_not_found(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    response = client.patch(
+        "/jobs/999/status",
+        headers=headers,
+        json={
+            "status": "assigned",
+        },
+    )
+
+    assert response.status_code == 404
+
+
+
+# PUT cannot change status
+def test_update_job_does_not_change_status(client):
+    headers = register_and_login(
+        client,
+        "Manish",
+        "manish@example.com",
+        "TestPassword123",
+    )
+
+    job = create_job(client, headers)
+
+    response = client.put(
+        f"/jobs/{job['id']}",
+        headers=headers,
+        json={
+            "title": "Updated Electrical Job",
+            "description": "Updated description for electrical repair work.",
+            "location": "Indore",
+            "budget": 3000,
+            "status": "completed",
+        },
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["status"] == "open"

@@ -8,3 +8,7 @@ class EmailAlreadyRegisteredException(Exception):
 
 class JobNotFoundException(Exception):
     pass
+
+
+class InvalidJobStatusTransitionException(Exception):
+    pass
