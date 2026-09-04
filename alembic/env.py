@@ -5,11 +5,14 @@ from sqlalchemy import pool
 
 from alembic import context
 
+
 # Import your SQLAlchemy Base
 from backend.app.database.database import Base
 
+
 # Import your models so SQLAlchemy knows about them
 from backend.app.models.user import User
+from backend.app.models.job import Job
 
 
 # Alembic Config object
