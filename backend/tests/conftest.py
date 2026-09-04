@@ -8,7 +8,6 @@ from fastapi.testclient import TestClient
 
 from backend.app.main import app
 from backend.app.database.database import Base
-
 from backend.app.core.dependencies import get_db
 
 
@@ -59,3 +58,13 @@ def clean_database():
     yield
 
     Base.metadata.drop_all(bind=engine)
+
+
+@pytest.fixture
+def db():
+    db = TestingSessionLocal()
+
+    try:
+        yield db
+    finally:
+        db.close()

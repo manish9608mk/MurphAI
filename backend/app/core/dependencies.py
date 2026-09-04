@@ -1,9 +1,11 @@
 from fastapi import Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from backend.app.core.exceptions import WorkerNotFoundException
 from backend.app.core.security import get_current_user_id
 from backend.app.database.database import SessionLocal
 from backend.app.models.job import Job
+from backend.app.models.worker import Worker
 
 
 def get_db():
@@ -67,6 +69,40 @@ def verify_job_access(action: str):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail=f"You are not allowed to {action} this job",
+            )
+
+        return current_user_id
+
+    return dependency
+
+
+def verify_worker_access(action: str):
+    """
+    Verify that the authenticated user owns
+    the requested worker profile.
+    """
+
+    def dependency(
+        worker_id: int,
+        db: Session = Depends(get_db),
+        current_user_id: int = Depends(get_current_user_id),
+    ):
+        worker = (
+            db.query(Worker)
+            .filter(Worker.id == worker_id)
+            .first()
+        )
+
+        if not worker:
+            raise WorkerNotFoundException()
+
+        if worker.user_id != current_user_id:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=(
+                    f"You are not allowed to "
+                    f"{action} this worker profile"
+                ),
             )
 
         return current_user_id

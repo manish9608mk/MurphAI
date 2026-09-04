@@ -5,12 +5,15 @@ from backend.app.core.config import settings
 from backend.app.api.users import router as users_router
 from backend.app.api.auth import router as auth_router
 from backend.app.api.jobs import router as jobs_router
+from backend.app.api.workers import router as workers_router
 
 from backend.app.core.exceptions import (
     UserNotFoundException,
     EmailAlreadyRegisteredException,
     JobNotFoundException,
     InvalidJobStatusTransitionException,
+    WorkerNotFoundException,
+    WorkerAlreadyExistsException,
 )
 
 from backend.app.core.exception_handlers import (
@@ -18,6 +21,8 @@ from backend.app.core.exception_handlers import (
     email_already_registered_handler,
     job_not_found_handler,
     invalid_job_status_transition_handler,
+    worker_not_found_exception_handler,
+    worker_already_exists_exception_handler,
 )
 
 
@@ -48,10 +53,24 @@ app.add_exception_handler(
     invalid_job_status_transition_handler,
 )
 
+app.add_exception_handler(
+    WorkerNotFoundException,
+    worker_not_found_exception_handler,
+)
+
+app.add_exception_handler(
+    WorkerAlreadyExistsException,
+    worker_already_exists_exception_handler,
+)
+
 
 app.include_router(users_router)
+
 app.include_router(auth_router)
+
 app.include_router(jobs_router)
+
+app.include_router(workers_router)
 
 
 @app.get("/")

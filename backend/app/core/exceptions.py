@@ -12,3 +12,11 @@ class JobNotFoundException(Exception):
 
 class InvalidJobStatusTransitionException(Exception):
     pass
+
+
+class WorkerNotFoundException(Exception):
+    pass
+
+
+class WorkerAlreadyExistsException(Exception):
+    pass
