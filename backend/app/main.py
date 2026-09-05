@@ -17,6 +17,7 @@ from backend.app.api.work import router as work_router
 from backend.app.api.evidence import router as evidence_router
 from backend.app.api.confirmation import router as confirmation_router
 from backend.app.api.payment import router as payment_router
+from backend.app.api.reputation import router as reputation_router
 
 
 # ============================================================
@@ -195,6 +196,7 @@ app.include_router(work_router)
 app.include_router(evidence_router)
 app.include_router(confirmation_router)
 app.include_router(payment_router)
+app.include_router(reputation_router)
 
 
 # ============================================================

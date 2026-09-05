@@ -16,6 +16,11 @@ from backend.app.models.job import Job
 from backend.app.models.worker import Worker
 from backend.app.models.skill import Skill
 from backend.app.models.assignment import Assignment
+from backend.app.models.work import Work
+from backend.app.models.evidence import Evidence
+from backend.app.models.confirmation import Confirmation
+from backend.app.models.payment import Payment
+from backend.app.models.reputation import Reputation
 
 
 # Alembic Config object
