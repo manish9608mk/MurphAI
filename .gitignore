@@ -20,3 +20,9 @@ env/
 
 # macOS
 .DS_Store
+
+# MLflow
+mlflow.db
+
+
+mlruns/
