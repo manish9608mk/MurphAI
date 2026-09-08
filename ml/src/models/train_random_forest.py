@@ -19,6 +19,8 @@ Pipeline:
         ↓
     Validation Evaluation
         ↓
+    MLflow Tracking
+        ↓
     Save Model
 """
 
@@ -39,6 +41,12 @@ from ml.src.data.data_loader import load_and_validate_dataset
 from ml.src.data.dataset_split import split_dataset
 from ml.src.features.feature_engineering import prepare_features
 from ml.src.models.model_io import save_model
+from ml.src.tracking.mlflow_tracking import (
+    start_run,
+    log_parameters,
+    log_metrics,
+    log_model,
+)
 
 
 # ============================================================
@@ -149,7 +157,7 @@ def train_random_forest_model() -> tuple[
     )
 
     # --------------------------------------------------------
-    # Step 6: Save model
+    # Step 6: Save model locally
     # --------------------------------------------------------
 
     model_path = save_model(
@@ -249,28 +257,63 @@ def evaluate_validation_set(
 
 def main() -> None:
     """
-    Train and evaluate the Random Forest model.
+    Train, evaluate, and track the Random Forest model
+    with MLflow.
     """
 
     # --------------------------------------------------------
-    # Train model
+    # Start MLflow run
     # --------------------------------------------------------
 
-    (
-        model,
-        X_validation,
-        y_validation,
-    ) = train_random_forest_model()
+    with start_run("random-forest-baseline"):
 
-    # --------------------------------------------------------
-    # Evaluate model
-    # --------------------------------------------------------
+        # ----------------------------------------------------
+        # Log model parameters
+        # ----------------------------------------------------
 
-    metrics = evaluate_validation_set(
-        model=model,
-        X_validation=X_validation,
-        y_validation=y_validation,
-    )
+        log_parameters(
+            {
+                "model_type": "RandomForestClassifier",
+                "random_state": RANDOM_STATE,
+                "n_estimators": N_ESTIMATORS,
+                "max_depth": MAX_DEPTH,
+                "min_samples_split": MIN_SAMPLES_SPLIT,
+                "min_samples_leaf": MIN_SAMPLES_LEAF,
+                "n_jobs": -1,
+            }
+        )
+
+        # ----------------------------------------------------
+        # Train model
+        # ----------------------------------------------------
+
+        (
+            model,
+            X_validation,
+            y_validation,
+        ) = train_random_forest_model()
+
+        # ----------------------------------------------------
+        # Evaluate model
+        # ----------------------------------------------------
+
+        metrics = evaluate_validation_set(
+            model=model,
+            X_validation=X_validation,
+            y_validation=y_validation,
+        )
+
+        # ----------------------------------------------------
+        # Log validation metrics
+        # ----------------------------------------------------
+
+        log_metrics(metrics)
+
+        # ----------------------------------------------------
+        # Log trained model to MLflow
+        # ----------------------------------------------------
+
+        log_model(model)
 
     # --------------------------------------------------------
     # Display results
