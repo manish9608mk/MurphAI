@@ -8,7 +8,6 @@ by the trained champion model.
 Training and inference must use the same feature logic.
 """
 
-
 import pandas as pd
 
 
@@ -77,11 +76,20 @@ def prepare_inference_features(
     Raises
     ------
     ValueError
-        If required input fields are missing.
+        If required input fields are missing or invalid.
     """
 
     # --------------------------------------------------------
-    # Step 1: Validate required raw fields
+    # Step 1: Validate input type
+    # --------------------------------------------------------
+
+    if not isinstance(data, dict):
+        raise TypeError(
+            "Inference data must be a dictionary."
+        )
+
+    # --------------------------------------------------------
+    # Step 2: Validate required raw fields
     # --------------------------------------------------------
 
     missing_columns = [
@@ -97,7 +105,49 @@ def prepare_inference_features(
         )
 
     # --------------------------------------------------------
-    # Step 2: Create DataFrame
+    # Step 3: Extract scalar input values
+    # --------------------------------------------------------
+    #
+    # A single API request represents one worker-job pair.
+    # Therefore these values are normal Python scalars,
+    # not Pandas Series.
+    #
+
+    required_skill_count = data["required_skill_count"]
+    matched_skill_count = data["matched_skill_count"]
+    job_complexity = data["job_complexity"]
+
+    # --------------------------------------------------------
+    # Step 4: Validate skill counts
+    # --------------------------------------------------------
+
+    if required_skill_count <= 0:
+        raise ValueError(
+            "required_skill_count must be greater than zero."
+        )
+
+    if matched_skill_count < 0:
+        raise ValueError(
+            "matched_skill_count cannot be negative."
+        )
+
+    if matched_skill_count > required_skill_count:
+        raise ValueError(
+            "matched_skill_count cannot exceed "
+            "required_skill_count."
+        )
+
+    # --------------------------------------------------------
+    # Step 5: Validate job complexity
+    # --------------------------------------------------------
+
+    if job_complexity <= 0:
+        raise ValueError(
+            "job_complexity must be greater than zero."
+        )
+
+    # --------------------------------------------------------
+    # Step 6: Create DataFrame
     # --------------------------------------------------------
 
     features = pd.DataFrame(
@@ -110,47 +160,25 @@ def prepare_inference_features(
     )
 
     # --------------------------------------------------------
-    # Step 3: Calculate skill match ratio
+    # Step 7: Calculate skill match ratio
     # --------------------------------------------------------
 
-    required_skill_count = features[
-        "required_skill_count"
-    ]
-
-    matched_skill_count = features[
-        "matched_skill_count"
-    ]
-
-    if (required_skill_count <= 0).any():
-        raise ValueError(
-            "required_skill_count must be greater than zero."
-        )
-
-    if (
-        matched_skill_count
-        > required_skill_count
-    ).any():
-        raise ValueError(
-            "matched_skill_count cannot exceed "
-            "required_skill_count."
-        )
-
     features["skill_match_ratio"] = (
-        matched_skill_count
-        / required_skill_count
+        features["matched_skill_count"]
+        / features["required_skill_count"]
     )
 
     # --------------------------------------------------------
-    # Step 4: Calculate skill gap
+    # Step 8: Calculate skill gap
     # --------------------------------------------------------
 
     features["skill_gap"] = (
-        required_skill_count
-        - matched_skill_count
+        features["required_skill_count"]
+        - features["matched_skill_count"]
     )
 
     # --------------------------------------------------------
-    # Step 5: Calculate worker reliability score
+    # Step 9: Calculate worker reliability score
     # --------------------------------------------------------
 
     features["worker_reliability_score"] = (
@@ -162,25 +190,16 @@ def prepare_inference_features(
     )
 
     # --------------------------------------------------------
-    # Step 6: Calculate budget efficiency
+    # Step 10: Calculate budget efficiency
     # --------------------------------------------------------
-
-    job_complexity = features[
-        "job_complexity"
-    ]
-
-    if (job_complexity <= 0).any():
-        raise ValueError(
-            "job_complexity must be greater than zero."
-        )
 
     features["budget_per_complexity"] = (
         features["job_budget"]
-        / job_complexity
+        / features["job_complexity"]
     )
 
     # --------------------------------------------------------
-    # Step 7: Return exact model feature order
+    # Step 11: Return exact model feature order
     # --------------------------------------------------------
 
     return features[

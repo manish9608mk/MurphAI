@@ -15,8 +15,6 @@ The API route should not contain ML logic directly.
 """
 
 
-import pandas as pd
-
 from backend.app.schemas.ml import (
     WorkerJobPredictionRequest,
     WorkerJobPredictionResponse,
@@ -56,27 +54,33 @@ def predict_worker_job_success(
     # --------------------------------------------------------
     # Step 1: Convert API request into a dictionary
     # --------------------------------------------------------
+    #
+    # prepare_inference_features() expects a dictionary.
+    #
 
     raw_data = request.model_dump()
 
     # --------------------------------------------------------
-    # Step 2: Convert raw input into a DataFrame
+    # Step 2: Prepare inference features
     # --------------------------------------------------------
-
-    raw_features = pd.DataFrame([raw_data])
-
-    # --------------------------------------------------------
-    # Step 3: Prepare inference features
-    # --------------------------------------------------------
-    # This applies the same feature logic used
-    # by the trained ML model.
+    #
+    # This function:
+    #
+    #   - validates the raw input
+    #   - calculates skill_match_ratio
+    #   - calculates skill_gap
+    #   - calculates worker_reliability_score
+    #   - calculates budget_per_complexity
+    #   - creates the DataFrame
+    #   - returns features in the exact model order
+    #
 
     inference_features = prepare_inference_features(
-        raw_features
+        raw_data
     )
 
     # --------------------------------------------------------
-    # Step 4: Run prediction using the champion model
+    # Step 3: Run prediction using the champion model
     # --------------------------------------------------------
 
     prediction = predict_with_champion(
@@ -84,7 +88,7 @@ def predict_worker_job_success(
     )
 
     # --------------------------------------------------------
-    # Step 5: Convert ML result into API response
+    # Step 4: Convert ML result into API response
     # --------------------------------------------------------
 
     return WorkerJobPredictionResponse(

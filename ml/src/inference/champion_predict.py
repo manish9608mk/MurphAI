@@ -4,59 +4,36 @@ Champion model inference for MurphAI.
 This module provides the production-facing inference layer
 for the current champion model.
 
-Current champion:
-    RandomForest
+The champion model is loaded from the MLflow Model Registry
+using the "champion" alias.
 
 Responsibilities:
-    1. Load the champion model.
+    1. Load the champion model from MLflow.
     2. Validate inference input.
     3. Generate a binary prediction.
     4. Generate success probability.
     5. Return a consistent prediction response.
 """
 
-from pathlib import Path
-
 import pandas as pd
+import mlflow.sklearn
+
+from ml.src.features.feature_engineering import FEATURE_COLUMNS
+from ml.src.registry.model_registry import (
+    REGISTERED_MODEL_NAME,
+    CHAMPION_ALIAS,
+    get_champion_model_uri,
+)
+from ml.src.tracking.mlflow_tracking import (
+    MLFLOW_TRACKING_URI,
+)
 
 
 # ============================================================
 # Configuration
 # ============================================================
 
-PROJECT_ROOT = Path(__file__).resolve().parents[3]
-
-MODEL_PATH = (
-    PROJECT_ROOT
-    / "ml"
-    / "models"
-    / "worker_job_random_forest.joblib"
-)
-
-
 CHAMPION_MODEL_NAME = "RandomForest"
-
-
-# ============================================================
-# Expected Features
-# ============================================================
-
-FEATURE_COLUMNS = [
-    "worker_experience_years",
-    "worker_completed_jobs",
-    "worker_success_rate",
-    "worker_rating",
-    "required_skill_count",
-    "matched_skill_count",
-    "skill_match_ratio",
-    "location_match",
-    "distance_km",
-    "job_complexity",
-    "job_budget",
-    "skill_gap",
-    "worker_reliability_score",
-    "budget_per_complexity",
-]
 
 
 # ============================================================
@@ -64,39 +41,31 @@ FEATURE_COLUMNS = [
 # ============================================================
 
 
-def load_champion_model(
-    model_path: Path = MODEL_PATH,
-):
+def load_champion_model():
     """
-    Load the current champion model from disk.
+    Load the current champion model from MLflow Model Registry.
 
-    Parameters
-    ----------
-    model_path : Path
-        Location of the saved champion model.
+    The model is resolved using the "champion" alias rather
+    than a hardcoded local model file.
 
     Returns
     -------
     object
-        Loaded Random Forest model.
+        Loaded scikit-learn champion model.
 
     Raises
     ------
-    FileNotFoundError
-        If the model file does not exist.
+    Exception
+        If the champion model cannot be loaded from MLflow.
     """
 
-    model_path = Path(model_path)
+    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
-    if not model_path.exists():
-        raise FileNotFoundError(
-            f"Champion model not found: {model_path}"
-        )
+    model_uri = get_champion_model_uri(
+        REGISTERED_MODEL_NAME
+    )
 
-    # Import joblib only when the model is loaded.
-    import joblib
-
-    return joblib.load(model_path)
+    return mlflow.sklearn.load_model(model_uri)
 
 
 # ============================================================
@@ -187,7 +156,7 @@ def predict_with_champion(
     model_features = features[FEATURE_COLUMNS].copy()
 
     # --------------------------------------------------------
-    # Step 3: Load champion model
+    # Step 3: Load champion model from MLflow Registry
     # --------------------------------------------------------
 
     model = load_champion_model()
@@ -224,7 +193,7 @@ def predict_with_champion(
 
 
 # ============================================================
-# Example CLI
+# Example Features
 # ============================================================
 
 
@@ -250,7 +219,7 @@ def create_example_features() -> pd.DataFrame:
                 "job_complexity": 2,
                 "job_budget": 5000.0,
                 "skill_gap": 0,
-                "worker_reliability_score": 0.90,
+                "worker_reliability_score": 0.846,
                 "budget_per_complexity": 2500.0,
             }
         ]
