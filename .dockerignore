@@ -1,0 +1,47 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment files
+.env
+
+# Local databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# ML generated artifacts
+mlruns/
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Git
+.git/
+.gitignore
+
+# Documentation / local development
+*.log
+
+# Node
+node_modules/
+
+# Temporary files
+tmp/
+temp/

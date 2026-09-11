@@ -1,0 +1,39 @@
+services:
+
+  # MurphAI Backend + ML Service
+
+  backend:
+    build:
+      context: .
+      dockerfile: infrastructure/docker/Dockerfile
+
+    # Container name used for local development.
+    container_name: murphai-backend
+
+    # Load secrets and configuration from the local .env file.
+    env_file:
+      - .env
+
+    # Expose the FastAPI application on port 8000.
+    ports:
+      - "8000:8000"
+
+    # Persist the existing MurphAI database
+    # and MLflow model registry/artifacts.
+    volumes:
+
+      # MurphAI application database.
+      - ./murphai.db:/app/murphai.db
+
+      # MLflow metadata database.
+      - ./mlflow.db:/app/mlflow.db
+
+      # Existing MLflow model artifacts.
+      #
+      # MLflow 3 stored the artifact location using
+      # this absolute path, so the same path is mounted
+      # inside the container for local development.
+      - ./mlruns:/Users/manishkumar/Documents/Explorer/MurphAI/mlruns
+
+    # Restart the container automatically if it stops unexpectedly.
+    restart: unless-stopped
