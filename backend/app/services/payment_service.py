@@ -26,16 +26,19 @@ def create_payment(
     """
     Create a payment record for confirmed work.
 
+    The Work row is locked before checking for an existing
+    payment so concurrent payment creation requests for the
+    same work are serialized.
+
     The payment amount is determined by the backend
     from the Job budget.
-
-    The client cannot choose the payment amount.
     """
 
-    # Find the Work.
+    # Lock the Work row for this transaction.
     work = (
         db.query(Work)
         .filter(Work.id == work_id)
+        .with_for_update()
         .first()
     )
 
@@ -94,7 +97,8 @@ def create_payment(
             "Work must be confirmed before payment"
         )
 
-    # Prevent duplicate payment.
+    # Check for an existing payment while holding the
+    # Work row lock.
     existing_payment = (
         db.query(Payment)
         .filter(
@@ -122,7 +126,6 @@ def create_payment(
             "Assigned worker not found"
         )
 
-    # IMPORTANT:
     # The backend determines the payment amount.
     # The client cannot override the Job budget.
     payment = Payment(
@@ -149,18 +152,23 @@ def mark_payment_as_paid(
     """
     Mark a payment as paid.
 
+    The Payment row is locked before checking its state so
+    concurrent paid requests cannot both transition the same
+    payment from pending to paid.
+
     This currently simulates successful payment processing.
 
     A real payment-provider webhook will be responsible
     for confirming payments in a future production version.
     """
 
-    # Find payment.
+    # Lock the Payment row for this transaction.
     payment = (
         db.query(Payment)
         .filter(
             Payment.id == payment_id
         )
+        .with_for_update()
         .first()
     )
 
@@ -175,7 +183,7 @@ def mark_payment_as_paid(
             "Only the customer can complete this payment"
         )
 
-    # Prevent duplicate completion.
+    # Re-check the state while holding the row lock.
     if payment.status == "paid":
         raise PermissionDeniedException(
             "Payment is already marked as paid"
