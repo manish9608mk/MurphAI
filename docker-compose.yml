@@ -14,16 +14,17 @@ services:
     env_file:
       - .env
 
+    # Start the backend only after PostgreSQL is healthy.
+    depends_on:
+      postgres:
+        condition: service_healthy
+
     # Expose the FastAPI application on port 8000.
     ports:
       - "8000:8000"
 
-    # Persist the existing MurphAI database
-    # and MLflow model registry/artifacts.
+    # Persist MLflow model registry/artifacts.
     volumes:
-
-      # MurphAI application database.
-      - ./murphai.db:/app/murphai.db
 
       # MLflow metadata database.
       - ./mlflow.db:/app/mlflow.db
@@ -39,29 +40,36 @@ services:
     restart: unless-stopped
 
 
+  # MurphAI PostgreSQL Database
+
+  postgres:
+    image: postgres:16
+
+    # Container name used for local development.
+    container_name: murphai-postgres
+
+    # Local development database configuration.
+    environment:
+      POSTGRES_DB: murphai
+      POSTGRES_USER: murphai
+      POSTGRES_PASSWORD: murphai_dev_password
+
+    # Persist PostgreSQL data between container restarts.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    # Check whether PostgreSQL is ready to accept connections.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U murphai -d murphai"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+    # Restart the database automatically if it stops unexpectedly.
+    restart: unless-stopped
 
 
+# Persistent Docker volumes
 
-# Compose file is basically instructions -
-# Your Compose file says:
-# I need a backend service.
-
-# Build it using:
-# infrastructure/docker/Dockerfile
-
-# Call the container:
-# murphai-backend
-
-# Give it:
-# .env
-
-# Expose:
-# 8000 → 8000
-
-# Mount:
-# murphai.db
-# mlflow.db
-# mlruns
-
-# Restart it automatically:
-# unless-stopped
+volumes:
+  postgres_data:

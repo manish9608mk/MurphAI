@@ -68,6 +68,8 @@ pluggy==1.6.0
 prettytable==3.18.0
 propcache==0.5.2
 protobuf==6.33.6
+psycopg==3.3.5
+psycopg-binary==3.3.5
 pwdlib==0.3.1
 pyarrow==25.0.1
 pyasn1==0.6.4

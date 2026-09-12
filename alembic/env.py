@@ -1,12 +1,10 @@
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config
 from sqlalchemy import pool
 
 from alembic import context
 
-
-# Import your SQLAlchemy Base
+from backend.app.core.config import settings
 from backend.app.database.database import Base
 
 
@@ -38,6 +36,13 @@ if config.config_file_name is not None:
 target_metadata = Base.metadata
 
 
+# Use the same database URL as the MurphAI application.
+config.set_main_option(
+    "sqlalchemy.url",
+    settings.database_url,
+)
+
+
 def run_migrations_offline() -> None:
     """
     Run migrations in offline mode.
@@ -46,7 +51,7 @@ def run_migrations_offline() -> None:
     an actual database connection.
     """
 
-    url = config.get_main_option("sqlalchemy.url")
+    url = settings.database_url
 
     context.configure(
         url=url,
@@ -69,16 +74,14 @@ def run_migrations_online() -> None:
     and applies migrations.
     """
 
-    connectable = engine_from_config(
-        config.get_section(
-            config.config_ini_section,
-            {}
-        ),
-        prefix="sqlalchemy.",
+    from sqlalchemy import create_engine
+
+    engine = create_engine(
+        settings.database_url,
         poolclass=pool.NullPool,
     )
 
-    with connectable.connect() as connection:
+    with engine.connect() as connection:
 
         context.configure(
             connection=connection,

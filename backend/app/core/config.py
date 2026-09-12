@@ -1,6 +1,8 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+# MurphAI Application Settings
+
 class Settings(BaseSettings):
     app_name: str = "MurphAI"
     app_version: str = "0.1.0"
@@ -8,6 +10,8 @@ class Settings(BaseSettings):
 
     secret_key: str
     algorithm: str = "HS256"
+
+    database_url: str
 
     model_config = SettingsConfigDict(
         env_file=".env",

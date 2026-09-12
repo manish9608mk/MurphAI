@@ -1,15 +1,24 @@
+# MurphAI Database Configuration
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
 
+from backend.app.core.config import settings
 
-DATABASE_URL = "sqlite:///./murphai.db"
 
+# Database Configuration
+
+DATABASE_URL = settings.database_url
+
+
+# SQLAlchemy Engine
 
 engine = create_engine(
     DATABASE_URL,
-    connect_args={"check_same_thread": False},
 )
 
+
+# Database Session
 
 SessionLocal = sessionmaker(
     autocommit=False,
@@ -17,5 +26,7 @@ SessionLocal = sessionmaker(
     bind=engine,
 )
 
+
+# SQLAlchemy Base
 
 Base = declarative_base()
