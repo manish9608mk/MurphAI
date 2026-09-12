@@ -15,6 +15,7 @@ DATABASE_URL = settings.database_url
 
 engine = create_engine(
     DATABASE_URL,
+    pool_pre_ping=True,
 )
 
 
