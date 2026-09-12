@@ -1,11 +1,29 @@
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text
+from sqlalchemy import (
+    CheckConstraint,
+    Column,
+    DateTime,
+    Float,
+    ForeignKey,
+    Integer,
+    String,
+    Text,
+)
 from sqlalchemy.sql import func
 
 from backend.app.database.database import Base
 
 
+# MurphAI Job Model
+
 class Job(Base):
     __tablename__ = "jobs"
+
+    __table_args__ = (
+        CheckConstraint(
+            "budget > 0",
+            name="ck_jobs_budget_positive",
+        ),
+    )
 
     id = Column(
         Integer,

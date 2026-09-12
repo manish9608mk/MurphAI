@@ -1,3 +1,7 @@
+from sqlalchemy.exc import IntegrityError
+
+from backend.app.models.job import Job
+
 def register_and_login(
     client,
     name,
@@ -671,3 +675,26 @@ def test_update_job_does_not_change_status(client):
     data = response.json()
 
     assert data["status"] == "open"
+
+
+def test_database_rejects_non_positive_job_budget(db):
+    job = Job(
+        title="Constraint Test",
+        description="Testing database constraint",
+        location="Bhopal",
+        budget=0,
+        status="open",
+        customer_id=1,
+    )
+
+    db.add(job)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+    else:
+        db.rollback()
+        raise AssertionError(
+            "Database accepted a non-positive job budget"
+        )

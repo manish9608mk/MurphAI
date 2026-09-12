@@ -1,5 +1,8 @@
+from sqlalchemy.exc import IntegrityError
+
 from backend.app.core.security import create_access_token
 from backend.app.models.user import User
+from backend.app.models.worker import Worker
 
 
 def create_test_user(
@@ -383,3 +386,23 @@ def test_get_single_worker_requires_authentication(client):
     response = client.get("/workers/1")
 
     assert response.status_code == 401
+
+
+def test_database_rejects_negative_worker_experience(db):
+    worker = Worker(
+        user_id=1,
+        experience_years=-1,
+        is_available=True,
+    )
+
+    db.add(worker)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+    else:
+        db.rollback()
+        raise AssertionError(
+            "Database accepted negative worker experience"
+        )
