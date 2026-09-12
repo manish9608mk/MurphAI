@@ -1,10 +1,8 @@
+import logging
+
+from backend.app.core.logging import configure_logging
 from fastapi import FastAPI
-
 from backend.app.core.config import settings
-
-# ============================================================
-# API Routers
-# ============================================================
 
 # API routers
 from backend.app.api.users import router as users_router
@@ -21,10 +19,7 @@ from backend.app.api.reputation import router as reputation_router
 from backend.app.api.ml import router as ml_router
 
 
-# ============================================================
 # Custom Exceptions
-# ============================================================
-
 from backend.app.core.exceptions import (
     UserNotFoundException,
     EmailAlreadyRegisteredException,
@@ -46,11 +41,7 @@ from backend.app.core.exceptions import (
     PermissionDeniedException,
 )
 
-
-# ============================================================
 # Exception Handlers
-# ============================================================
-
 from backend.app.core.exception_handlers import (
     user_not_found_handler,
     email_already_registered_handler,
@@ -73,25 +64,19 @@ from backend.app.core.exception_handlers import (
 )
 
 
-# ============================================================
 # FastAPI Application
-# ============================================================
-
 app = FastAPI(
     title="MurphAI",
     description="AI-powered intelligent system",
     version="0.1.0",
 )
+configure_logging()
+
+logger = logging.getLogger(__name__)
 
 
-# ============================================================
-# Exception Handlers
-# ============================================================
-
-# -----------------------------
+# EXCEPTION HANDLERS
 # User Exceptions
-# -----------------------------
-
 app.add_exception_handler(
     UserNotFoundException,
     user_not_found_handler,
@@ -103,10 +88,7 @@ app.add_exception_handler(
 )
 
 
-# -----------------------------
 # Job Exceptions
-# -----------------------------
-
 app.add_exception_handler(
     JobNotFoundException,
     job_not_found_handler,
@@ -118,10 +100,7 @@ app.add_exception_handler(
 )
 
 
-# -----------------------------
 # Worker Exceptions
-# -----------------------------
-
 app.add_exception_handler(
     WorkerNotFoundException,
     worker_not_found_exception_handler,
@@ -133,10 +112,7 @@ app.add_exception_handler(
 )
 
 
-# -----------------------------
 # Worker Skill Exceptions
-# -----------------------------
-
 app.add_exception_handler(
     WorkerSkillAlreadyExistsException,
     worker_skill_already_exists_handler,
@@ -148,10 +124,7 @@ app.add_exception_handler(
 )
 
 
-# -----------------------------
 # Assignment Exceptions
-# -----------------------------
-
 app.add_exception_handler(
     AssignmentNotFoundException,
     assignment_not_found_exception_handler,
@@ -173,20 +146,14 @@ app.add_exception_handler(
 )
 
 
-# -----------------------------
 # Authorization Exception
-# -----------------------------
-
 app.add_exception_handler(
     PermissionDeniedException,
     permission_denied_handler,
 )
 
 
-# ============================================================
 # API Routers
-# ============================================================
-
 app.include_router(users_router)
 app.include_router(auth_router)
 app.include_router(jobs_router)
@@ -201,15 +168,15 @@ app.include_router(reputation_router)
 app.include_router(ml_router)
 
 
-# ============================================================
-# Root Endpoint
-# ============================================================
 
+# Root Endpoint
 @app.get("/")
 def root():
     """
     Basic health endpoint for the application.
     """
+
+    logger.info("MurphAI health endpoint called")
 
     return {
         "message": f"{settings.app_name} is running",
