@@ -31,15 +31,18 @@ def create_reputation(
         Customer confirmation
         ↓
         Payment paid
+
+    The Work row is locked before checking its state and
+    whether a reputation already exists. This prevents
+    concurrent reputation requests for the same work from
+    racing.
     """
 
-    # ========================================================
-    # 1. Find Work
-    # ========================================================
-
+    # Lock the Work row for this transaction.
     work = (
         db.query(Work)
         .filter(Work.id == work_id)
+        .with_for_update()
         .first()
     )
 
@@ -52,10 +55,7 @@ def create_reputation(
             "Reputation can only be created for completed work"
         )
 
-    # ========================================================
-    # 2. Find Assignment
-    # ========================================================
-
+    # Find the assignment connected to the work.
     assignment = (
         db.query(Assignment)
         .filter(Assignment.id == work.assignment_id)
@@ -65,10 +65,7 @@ def create_reputation(
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # ========================================================
-    # 3. Find Job
-    # ========================================================
-
+    # Find the job connected to the assignment.
     job = (
         db.query(Job)
         .filter(Job.id == assignment.job_id)
@@ -78,22 +75,18 @@ def create_reputation(
     if not job:
         raise PermissionDeniedException("Job not found")
 
-    # ========================================================
-    # 4. Only Customer Can Give Reputation
-    # ========================================================
-
+    # Only the customer who created the job can give reputation.
     if job.customer_id != current_user_id:
         raise PermissionDeniedException(
             "Only the customer can rate this work"
         )
 
-    # ========================================================
-    # 5. Work Must Be Confirmed
-    # ========================================================
-
+    # Work must be confirmed.
     confirmation = (
         db.query(Confirmation)
-        .filter(Confirmation.work_id == work_id)
+        .filter(
+            Confirmation.work_id == work_id
+        )
         .first()
     )
 
@@ -102,13 +95,12 @@ def create_reputation(
             "Work must be confirmed before reputation can be created"
         )
 
-    # ========================================================
-    # 6. Payment Must Be Paid
-    # ========================================================
-
+    # Payment must be paid.
     payment = (
         db.query(Payment)
-        .filter(Payment.work_id == work_id)
+        .filter(
+            Payment.work_id == work_id
+        )
         .first()
     )
 
@@ -122,13 +114,12 @@ def create_reputation(
             "Payment must be completed before reputation can be created"
         )
 
-    # ========================================================
-    # 7. Prevent Duplicate Reputation
-    # ========================================================
-
+    # Check for existing reputation while holding the Work lock.
     existing_reputation = (
         db.query(Reputation)
-        .filter(Reputation.work_id == work_id)
+        .filter(
+            Reputation.work_id == work_id
+        )
         .first()
     )
 
@@ -137,13 +128,12 @@ def create_reputation(
             "Reputation already exists for this work"
         )
 
-    # ========================================================
-    # 8. Find Worker
-    # ========================================================
-
+    # Find the assigned worker.
     worker = (
         db.query(Worker)
-        .filter(Worker.id == assignment.worker_id)
+        .filter(
+            Worker.id == assignment.worker_id
+        )
         .first()
     )
 
@@ -152,10 +142,7 @@ def create_reputation(
             "Assigned worker not found"
         )
 
-    # ========================================================
-    # 9. Create Reputation
-    # ========================================================
-
+    # Create the reputation record.
     reputation = Reputation(
         work_id=work_id,
         customer_id=current_user_id,
