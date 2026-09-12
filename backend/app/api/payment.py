@@ -1,3 +1,5 @@
+# Payment API
+
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
@@ -22,10 +24,6 @@ router = APIRouter(
 )
 
 
-# ============================================================
-# Create Payment
-# ============================================================
-
 @router.post(
     "/",
     response_model=PaymentResponse,
@@ -39,20 +37,18 @@ def create_new_payment(
     """
     Customer creates a payment record
     for confirmed completed work.
+
+    The payment amount is calculated by the backend
+    from the Job budget. The client cannot choose it.
     """
 
     return create_payment(
         db=db,
         work_id=data.work_id,
-        amount=data.amount,
         transaction_reference=data.transaction_reference,
         current_user_id=current_user_id,
     )
 
-
-# ============================================================
-# Mark Payment as Paid
-# ============================================================
 
 @router.patch(
     "/{payment_id}/paid",
@@ -66,8 +62,8 @@ def complete_payment(
     """
     Simulate successful payment completion.
 
-    Real payment-provider webhooks
-    will replace this later.
+    A real payment provider webhook will replace
+    this mechanism later.
     """
 
     return mark_payment_as_paid(
@@ -76,10 +72,6 @@ def complete_payment(
         current_user_id=current_user_id,
     )
 
-
-# ============================================================
-# Get Payment
-# ============================================================
 
 @router.get(
     "/{payment_id}",
@@ -93,7 +85,7 @@ def get_single_payment(
     """
     Get payment details.
 
-    The customer and assigned worker
+    Only the customer or assigned worker
     can view the payment.
     """
 

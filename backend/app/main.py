@@ -61,6 +61,7 @@ from backend.app.core.exception_handlers import (
     worker_unavailable_exception_handler,
 
     permission_denied_handler,
+    unexpected_exception_handler,
 )
 
 
@@ -153,6 +154,15 @@ app.add_exception_handler(
 )
 
 
+# Unexpected Exceptions
+# Any unexpected error gets logged internally and
+# returns a safe generic 500 response to the client.
+app.add_exception_handler(
+    Exception,
+    unexpected_exception_handler,
+)
+
+
 # API Routers
 app.include_router(users_router)
 app.include_router(auth_router)
@@ -166,7 +176,6 @@ app.include_router(confirmation_router)
 app.include_router(payment_router)
 app.include_router(reputation_router)
 app.include_router(ml_router)
-
 
 
 # Root Endpoint

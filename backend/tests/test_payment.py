@@ -1,3 +1,5 @@
+# Payment Tests
+
 from backend.app.models.payment import Payment
 
 
@@ -70,9 +72,20 @@ def create_worker(client, token):
     return response.json()
 
 
-def create_accepted_assignment(client, customer_token, worker_token):
-    job = create_job(client, customer_token)
-    worker = create_worker(client, worker_token)
+def create_accepted_assignment(
+    client,
+    customer_token,
+    worker_token,
+):
+    job = create_job(
+        client,
+        customer_token,
+    )
+
+    worker = create_worker(
+        client,
+        worker_token,
+    )
 
     response = client.post(
         "/assignments/",
@@ -97,7 +110,11 @@ def create_accepted_assignment(client, customer_token, worker_token):
     return assignment_id
 
 
-def create_completed_work(client, customer_token, worker_token):
+def create_completed_work(
+    client,
+    customer_token,
+    worker_token,
+):
     assignment_id = create_accepted_assignment(
         client,
         customer_token,
@@ -140,7 +157,11 @@ def create_completed_work(client, customer_token, worker_token):
     return work_id
 
 
-def confirm_work(client, customer_token, work_id):
+def confirm_work(
+    client,
+    customer_token,
+    work_id,
+):
     response = client.post(
         "/confirmations/",
         headers=auth_headers(customer_token),
@@ -155,9 +176,7 @@ def confirm_work(client, customer_token, work_id):
     return response.json()
 
 
-# ============================================================
 # Create Payment
-# ============================================================
 
 def test_customer_can_create_payment(client):
     register_user(
@@ -199,7 +218,6 @@ def test_customer_can_create_payment(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
             "transaction_reference": "TEST-123",
         },
     )
@@ -214,9 +232,7 @@ def test_customer_can_create_payment(client):
     assert data["transaction_reference"] == "TEST-123"
 
 
-# ============================================================
 # Payment Requires Confirmation
-# ============================================================
 
 def test_payment_requires_confirmation(client):
     register_user(
@@ -252,16 +268,13 @@ def test_payment_requires_confirmation(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
     assert response.status_code == 403
 
 
-# ============================================================
 # Worker Cannot Create Payment
-# ============================================================
 
 def test_worker_cannot_create_payment(client):
     register_user(
@@ -303,16 +316,13 @@ def test_worker_cannot_create_payment(client):
         headers=auth_headers(worker_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
     assert response.status_code == 403
 
 
-# ============================================================
 # Duplicate Payment
-# ============================================================
 
 def test_duplicate_payment_is_rejected(client):
     register_user(
@@ -354,7 +364,6 @@ def test_duplicate_payment_is_rejected(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
@@ -365,16 +374,13 @@ def test_duplicate_payment_is_rejected(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
     assert second_response.status_code == 403
 
 
-# ============================================================
 # Payment Must Be For Completed Work
-# ============================================================
 
 def test_payment_requires_completed_work(client):
     register_user(
@@ -434,16 +440,62 @@ def test_payment_requires_completed_work(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
     assert payment_response.status_code == 403
 
 
-# ============================================================
+# Client Cannot Control Payment Amount
+
+def test_client_cannot_control_payment_amount(client):
+    register_user(
+        client,
+        "Customer",
+        "customer@example.com",
+    )
+
+    register_user(
+        client,
+        "Worker",
+        "worker@example.com",
+    )
+
+    customer_token = login_user(
+        client,
+        "customer@example.com",
+    )
+
+    worker_token = login_user(
+        client,
+        "worker@example.com",
+    )
+
+    work_id = create_completed_work(
+        client,
+        customer_token,
+        worker_token,
+    )
+
+    confirm_work(
+        client,
+        customer_token,
+        work_id,
+    )
+
+    response = client.post(
+        "/payments/",
+        headers=auth_headers(customer_token),
+        json={
+            "work_id": work_id,
+            "amount": 1,
+        },
+    )
+
+    assert response.status_code == 422
+
+
 # Mark Payment As Paid
-# ============================================================
 
 def test_customer_can_mark_payment_as_paid(client):
     register_user(
@@ -485,7 +537,6 @@ def test_customer_can_mark_payment_as_paid(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
@@ -506,9 +557,7 @@ def test_customer_can_mark_payment_as_paid(client):
     assert data["paid_at"] is not None
 
 
-# ============================================================
 # Worker Cannot Mark Payment As Paid
-# ============================================================
 
 def test_worker_cannot_mark_payment_as_paid(client):
     register_user(
@@ -550,7 +599,6 @@ def test_worker_cannot_mark_payment_as_paid(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
@@ -566,9 +614,7 @@ def test_worker_cannot_mark_payment_as_paid(client):
     assert response.status_code == 403
 
 
-# ============================================================
 # Duplicate Paid Transition
-# ============================================================
 
 def test_payment_cannot_be_marked_paid_twice(client):
     register_user(
@@ -610,7 +656,6 @@ def test_payment_cannot_be_marked_paid_twice(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
@@ -633,9 +678,7 @@ def test_payment_cannot_be_marked_paid_twice(client):
     assert response.status_code == 403
 
 
-# ============================================================
 # Get Payment
-# ============================================================
 
 def test_customer_can_view_payment(client):
     register_user(
@@ -677,7 +720,6 @@ def test_customer_can_view_payment(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
@@ -734,7 +776,6 @@ def test_worker_can_view_payment(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
@@ -751,9 +792,7 @@ def test_worker_can_view_payment(client):
     assert response.json()["id"] == payment_id
 
 
-# ============================================================
 # Unauthorized User
-# ============================================================
 
 def test_unrelated_user_cannot_view_payment(client):
     register_user(
@@ -806,7 +845,6 @@ def test_unrelated_user_cannot_view_payment(client):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
         },
     )
 
@@ -822,9 +860,7 @@ def test_unrelated_user_cannot_view_payment(client):
     assert response.status_code == 403
 
 
-# ============================================================
 # Missing Payment
-# ============================================================
 
 def test_missing_payment_is_rejected(client):
     register_user(
@@ -846,9 +882,7 @@ def test_missing_payment_is_rejected(client):
     assert response.status_code == 403
 
 
-# ============================================================
 # Database Verification
-# ============================================================
 
 def test_payment_is_saved_in_database(client, db):
     register_user(
@@ -890,7 +924,6 @@ def test_payment_is_saved_in_database(client, db):
         headers=auth_headers(customer_token),
         json={
             "work_id": work_id,
-            "amount": 1500,
             "transaction_reference": "DB-TEST-123",
         },
     )
@@ -899,7 +932,9 @@ def test_payment_is_saved_in_database(client, db):
 
     payment = (
         db.query(Payment)
-        .filter(Payment.work_id == work_id)
+        .filter(
+            Payment.work_id == work_id
+        )
         .first()
     )
 

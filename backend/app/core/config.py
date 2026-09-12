@@ -1,3 +1,6 @@
+from typing import Literal
+
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,8 +11,12 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     environment: str = "development"
 
-    secret_key: str
-    algorithm: str = "HS256"
+    # JWT security configuration.
+    # A short secret makes token signing easier to attack.
+    secret_key: str = Field(min_length=32)
+
+    # Keep the JWT algorithm explicit and predictable.
+    algorithm: Literal["HS256"] = "HS256"
 
     database_url: str
 

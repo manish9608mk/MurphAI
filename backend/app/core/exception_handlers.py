@@ -1,3 +1,5 @@
+import logging
+
 from fastapi import Request
 from fastapi.responses import JSONResponse
 
@@ -18,9 +20,10 @@ from backend.app.core.exceptions import (
 )
 
 
-# ============================================================
+logger = logging.getLogger(__name__)
+
+
 # User Exception Handlers
-# ============================================================
 
 async def user_not_found_handler(
     request: Request,
@@ -46,9 +49,7 @@ async def email_already_registered_handler(
     )
 
 
-# ============================================================
 # Job Exception Handlers
-# ============================================================
 
 async def job_not_found_handler(
     request: Request,
@@ -69,17 +70,13 @@ async def invalid_job_status_transition_handler(
     return JSONResponse(
         status_code=400,
         content={
-            # Return the actual error message.
-            # Example:
-            # "Invalid job status transition: open -> completed"
+            # Return the actual transition error to the client.
             "detail": str(exc),
         },
     )
 
 
-# ============================================================
 # Worker Exception Handlers
-# ============================================================
 
 async def worker_not_found_exception_handler(
     request: Request,
@@ -105,9 +102,7 @@ async def worker_already_exists_exception_handler(
     )
 
 
-# ============================================================
 # Worker Skill Exception Handlers
-# ============================================================
 
 async def worker_skill_already_exists_handler(
     request: Request,
@@ -133,9 +128,7 @@ async def worker_skill_not_found_handler(
     )
 
 
-# ============================================================
 # Assignment Exception Handlers
-# ============================================================
 
 async def assignment_not_found_exception_handler(
     request: Request,
@@ -186,11 +179,7 @@ async def worker_unavailable_exception_handler(
     )
 
 
-# ============================================================
 # Permission Exception Handler
-# ============================================================
-# Converts our custom permission error
-# into HTTP 403 Forbidden.
 
 async def permission_denied_handler(
     request: Request,
@@ -199,6 +188,27 @@ async def permission_denied_handler(
     return JSONResponse(
         status_code=403,
         content={
+            # Return the permission reason to the client.
             "detail": str(exc),
+        },
+    )
+
+
+# Unexpected Exception Handler
+
+async def unexpected_exception_handler(
+    request: Request,
+    exc: Exception,
+):
+    # Log the real error internally without exposing details to users.
+    logger.exception(
+        "Unexpected application error",
+        exc_info=exc,
+    )
+
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Internal server error",
         },
     )

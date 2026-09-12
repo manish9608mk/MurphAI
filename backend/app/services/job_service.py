@@ -1,3 +1,5 @@
+# Job Services
+
 from sqlalchemy.orm import Session
 
 from backend.app.models.job import Job
@@ -70,10 +72,23 @@ def update_job(
     if not job:
         raise JobNotFoundException()
 
+    # Once a job has been assigned,
+    # its budget becomes financially authoritative.
+    #
+    # Do not allow the budget to change after
+    # the job leaves the open state.
+    if job.status != "open" and job.budget != job_data.budget:
+        raise InvalidJobStatusTransitionException(
+            "Job budget cannot be changed after assignment"
+        )
+
     job.title = job_data.title
     job.description = job_data.description
     job.location = job_data.location
-    job.budget = job_data.budget
+
+    # Budget can only change while the job is open.
+    if job.status == "open":
+        job.budget = job_data.budget
 
     db.commit()
     db.refresh(job)
@@ -102,7 +117,7 @@ def update_job_status(
         raise InvalidJobStatusTransitionException(
             f"Invalid job status transition: "
             f"{job.status} -> {new_status}"
-)
+        )
 
     job.status = new_status
 
