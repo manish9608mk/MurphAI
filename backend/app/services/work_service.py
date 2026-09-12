@@ -15,9 +15,7 @@ from backend.app.core.exceptions import (
 )
 
 
-# ============================================================
 # Create Work
-# ============================================================
 
 def create_work(
     db: Session,
@@ -30,43 +28,32 @@ def create_work(
 
     Only the assigned worker can create the work.
 
-    Example:
-
-        Assignment #7
-              ↓
-        Worker #5
-              ↓
-        Work #3
+    The Assignment row is locked before checking its state
+    and whether Work already exists. This prevents concurrent
+    Work creation requests for the same assignment from
+    racing.
     """
 
-    # --------------------------------------------------------
-    # 1. Find the assignment
-    # --------------------------------------------------------
-
+    # Lock the Assignment row for this transaction.
     assignment = (
         db.query(Assignment)
         .filter(
             Assignment.id == assignment_id
         )
+        .with_for_update()
         .first()
     )
 
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # --------------------------------------------------------
-    # 2. Assignment must be accepted
-    # --------------------------------------------------------
-
+    # Assignment must be accepted.
     if assignment.status != "accepted":
         raise PermissionDeniedException(
             "Work can only be created for an accepted assignment"
         )
 
-    # --------------------------------------------------------
-    # 3. Find the worker
-    # --------------------------------------------------------
-
+    # Find the worker connected to the assignment.
     worker = (
         db.query(Worker)
         .filter(
@@ -80,19 +67,13 @@ def create_work(
             "Assigned worker not found"
         )
 
-    # --------------------------------------------------------
-    # 4. Only the assigned worker can create Work
-    # --------------------------------------------------------
-
+    # Only the assigned worker can create Work.
     if worker.user_id != current_user_id:
         raise PermissionDeniedException(
             "You are not allowed to create work for this assignment"
         )
 
-    # --------------------------------------------------------
-    # 5. Prevent duplicate Work records
-    # --------------------------------------------------------
-
+    # Check for existing Work while holding the Assignment lock.
     existing_work = (
         db.query(Work)
         .filter(
@@ -106,10 +87,7 @@ def create_work(
             "Work already exists for this assignment"
         )
 
-    # --------------------------------------------------------
-    # 6. Create Work
-    # --------------------------------------------------------
-
+    # Create Work.
     work = Work(
         assignment_id=assignment_id,
         status="pending",
