@@ -20,10 +20,20 @@ def create_confirmation(
     Create a confirmation for completed work.
 
     Only the customer who owns the job can confirm the work.
+
+    The Work row is locked before checking its state and
+    whether a confirmation already exists. This prevents
+    concurrent confirmation requests for the same work from
+    racing.
     """
 
-    # Find the work.
-    work = db.query(Work).filter(Work.id == work_id).first()
+    # Lock the Work row for this transaction.
+    work = (
+        db.query(Work)
+        .filter(Work.id == work_id)
+        .with_for_update()
+        .first()
+    )
 
     if not work:
         raise PermissionDeniedException("Work not found")
@@ -45,7 +55,11 @@ def create_confirmation(
         raise AssignmentNotFoundException()
 
     # Find the job connected to the assignment.
-    job = db.query(Job).filter(Job.id == assignment.job_id).first()
+    job = (
+        db.query(Job)
+        .filter(Job.id == assignment.job_id)
+        .first()
+    )
 
     if not job:
         raise PermissionDeniedException("Job not found")
@@ -56,10 +70,13 @@ def create_confirmation(
             "Only the customer can confirm this work"
         )
 
-    # Make sure the work has not already been confirmed.
+    # Check for an existing confirmation while holding
+    # the Work row lock.
     existing_confirmation = (
         db.query(Confirmation)
-        .filter(Confirmation.work_id == work_id)
+        .filter(
+            Confirmation.work_id == work_id
+        )
         .first()
     )
 
