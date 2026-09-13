@@ -200,15 +200,27 @@ async def unexpected_exception_handler(
     request: Request,
     exc: Exception,
 ):
+    request_id = getattr(
+        request.state,
+        "request_id",
+        None,
+    )
+
     # Log the real error internally without exposing details to users.
     logger.exception(
-        "Unexpected application error",
+        "Unexpected application error | request_id=%s",
+        request_id,
         exc_info=exc,
     )
 
-    return JSONResponse(
+    response = JSONResponse(
         status_code=500,
         content={
             "detail": "Internal server error",
         },
     )
+
+    if request_id:
+        response.headers["X-Request-ID"] = request_id
+
+    return response

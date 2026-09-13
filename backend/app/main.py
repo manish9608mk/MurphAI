@@ -40,6 +40,7 @@ from backend.app.core.exceptions import (
     WorkerUnavailableException,
 )
 from backend.app.core.logging import configure_logging
+from backend.app.core.middleware import RequestLoggingMiddleware
 
 # API routers
 from backend.app.api.assignments import router as assignments_router
@@ -67,6 +68,11 @@ app = FastAPI(
 configure_logging()
 
 logger = logging.getLogger(__name__)
+
+# Request Observability
+app.add_middleware(
+    RequestLoggingMiddleware,
+)
 
 
 # CORS
