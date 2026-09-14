@@ -31,6 +31,15 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install -r requirements.txt
 
+      - name: Prepare MLflow champion model
+        env:
+          DATABASE_URL: sqlite://
+          SECRET_KEY: ci-test-secret-key-1234567890123456
+          ALGORITHM: HS256
+        run: |
+          python -m ml.src.models.train_random_forest
+          python -c "from ml.src.registry.model_registry import register_latest_random_forest; model_version = register_latest_random_forest(); print(f'Registered model version: {model_version.version}')"
+
       - name: Run tests
         env:
           DATABASE_URL: sqlite://
