@@ -4,24 +4,29 @@ Champion model inference for MurphAI.
 This module provides the production-facing inference layer
 for the current champion model.
 
-The champion model is loaded from the MLflow Model Registry
+The champion model is resolved from the MLflow Model Registry
 using the "champion" alias.
 
+The loaded model is cached in application memory so MLflow
+does not need to be contacted for every prediction request.
+
 Responsibilities:
-    1. Load the champion model from MLflow.
+    1. Load and cache the champion model.
     2. Validate inference input.
     3. Generate a binary prediction.
     4. Generate success probability.
     5. Return a consistent prediction response.
 """
 
-import pandas as pd
+from functools import lru_cache
+
+import mlflow
 import mlflow.sklearn
+import pandas as pd
 
 from ml.src.features.feature_engineering import FEATURE_COLUMNS
 from ml.src.registry.model_registry import (
     REGISTERED_MODEL_NAME,
-    CHAMPION_ALIAS,
     get_champion_model_uri,
 )
 from ml.src.tracking.mlflow_tracking import (
@@ -29,24 +34,27 @@ from ml.src.tracking.mlflow_tracking import (
 )
 
 
-# ============================================================
-# Configuration
-# ============================================================
+# Champion model configuration
 
 CHAMPION_MODEL_NAME = "RandomForest"
 
 
-# ============================================================
-# Model Loading
-# ============================================================
+# Champion model loading
 
-
+@lru_cache(maxsize=1)
 def load_champion_model():
     """
-    Load the current champion model from MLflow Model Registry.
+    Load the current champion model from MLflow and cache it.
 
-    The model is resolved using the "champion" alias rather
-    than a hardcoded local model file.
+    The champion model is resolved through the MLflow
+    "champion" alias instead of using a hardcoded model version
+    or local model file.
+
+    The cache ensures that the model is normally loaded only
+    once per application process. Subsequent predictions reuse
+    the already loaded model from memory.
+
+    A process restart automatically clears the cache.
 
     Returns
     -------
@@ -59,19 +67,39 @@ def load_champion_model():
         If the champion model cannot be loaded from MLflow.
     """
 
+    # Configure MLflow before resolving the registered model.
     mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
 
+    # Build the model URI from the stable registered-model name
+    # and the "champion" alias. This allows model promotion
+    # without changing application code.
     model_uri = get_champion_model_uri(
         REGISTERED_MODEL_NAME
     )
 
+    # Download/load the model from MLflow.
+    #
+    # Because this function is cached, this operation normally
+    # happens only once per application process.
     return mlflow.sklearn.load_model(model_uri)
 
 
-# ============================================================
-# Input Validation
-# ============================================================
+def clear_champion_model_cache() -> None:
+    """
+    Clear the in-memory champion model cache.
 
+    This is useful when MurphAI promotes a new champion model
+    and the running application needs to reload it.
+
+    The function does not load a new model immediately.
+    The next prediction will load the currently configured
+    champion model from MLflow.
+    """
+
+    load_champion_model.cache_clear()
+
+
+# Inference input validation
 
 def validate_features(
     features: pd.DataFrame,
@@ -116,16 +144,13 @@ def validate_features(
         )
 
 
-# ============================================================
-# Champion Prediction
-# ============================================================
-
+# Champion prediction
 
 def predict_with_champion(
     features: pd.DataFrame,
 ) -> dict:
     """
-    Generate a prediction using the current champion model.
+    Generate a prediction using the cached champion model.
 
     Parameters
     ----------
@@ -143,36 +168,25 @@ def predict_with_champion(
             model_name
     """
 
-    # --------------------------------------------------------
-    # Step 1: Validate input
-    # --------------------------------------------------------
-
+    # Step 1: Validate the incoming feature matrix.
     validate_features(features)
 
-    # --------------------------------------------------------
-    # Step 2: Keep features in training order
-    # --------------------------------------------------------
-
+    # Step 2: Keep feature columns in exactly the same order
+    # used during model training.
     model_features = features[FEATURE_COLUMNS].copy()
 
-    # --------------------------------------------------------
-    # Step 3: Load champion model from MLflow Registry
-    # --------------------------------------------------------
-
+    # Step 3: Get the champion model.
+    #
+    # The first request loads the model from MLflow.
+    # Later requests reuse the in-memory cached model.
     model = load_champion_model()
 
-    # --------------------------------------------------------
-    # Step 4: Generate prediction
-    # --------------------------------------------------------
-
+    # Step 4: Generate the binary prediction.
     prediction = model.predict(model_features)
 
     predicted_success = int(prediction[0])
 
-    # --------------------------------------------------------
-    # Step 5: Generate probability
-    # --------------------------------------------------------
-
+    # Step 5: Generate the probability for the successful class.
     probabilities = model.predict_proba(
         model_features
     )
@@ -181,10 +195,8 @@ def predict_with_champion(
         probabilities[0][1]
     )
 
-    # --------------------------------------------------------
-    # Step 6: Return standardized result
-    # --------------------------------------------------------
-
+    # Step 6: Return a stable response structure to the
+    # backend service.
     return {
         "predicted_success": predicted_success,
         "success_probability": success_probability,
@@ -192,16 +204,14 @@ def predict_with_champion(
     }
 
 
-# ============================================================
-# Example Features
-# ============================================================
-
+# Example features
 
 def create_example_features() -> pd.DataFrame:
     """
     Create one example worker-job feature row.
 
-    This is only used for the command-line demonstration.
+    This function is only used by the command-line
+    demonstration and local development checks.
     """
 
     return pd.DataFrame(
@@ -226,10 +236,7 @@ def create_example_features() -> pd.DataFrame:
     )
 
 
-# ============================================================
-# CLI
-# ============================================================
-
+# Command-line demonstration
 
 def main() -> None:
     """
