@@ -4,9 +4,15 @@ MLflow tracking utilities for MurphAI.
 This module provides the common MLflow configuration used by
 model training, model registration, and model inference.
 
-Storage is environment-configurable so the same application
-can run on a developer machine, inside Docker, or in CI
-without storing machine-specific filesystem paths.
+The tracking URI is environment-configurable so the same
+application code can work with:
+
+    - local SQLite during development
+    - Docker-local MLflow storage
+    - a remote MLflow Tracking Server in production
+
+When a remote Tracking Server is used, artifact storage is
+managed by that server instead of by the MurphAI application.
 """
 
 import os
@@ -16,15 +22,15 @@ import mlflow
 import mlflow.sklearn
 
 
-# MurphAI MLflow storage configuration
+# MurphAI MLflow configuration
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-# The MLflow metadata database contains experiments, runs,
-# registered models, versions, and aliases.
+# Local MLflow metadata database.
 #
-# Local development defaults to the project directory.
-# Docker/production can override this with MLFLOW_DB_PATH.
+# This is used only when MLFLOW_TRACKING_URI is not explicitly
+# configured. Keeping the fallback local makes development easy
+# while allowing production to provide its own Tracking Server.
 MLFLOW_DB_PATH = Path(
     os.getenv(
         "MLFLOW_DB_PATH",
@@ -32,14 +38,33 @@ MLFLOW_DB_PATH = Path(
     )
 )
 
-MLFLOW_TRACKING_URI = (
-    f"sqlite:///{MLFLOW_DB_PATH}"
-)
-
-# Model files logged by MLflow are stored under this directory.
+# MLflow Tracking URI.
 #
-# Local development defaults to project/mlruns.
-# Docker can override this with /app/mlruns.
+# Local default:
+#     sqlite:///project/mlflow.db
+#
+# Production example:
+#     http://mlflow.internal:5000
+#
+# An explicitly configured URI always takes precedence over
+# the local SQLite fallback.
+_configured_tracking_uri = os.getenv(
+    "MLFLOW_TRACKING_URI",
+    ""
+).strip()
+
+if _configured_tracking_uri:
+    MLFLOW_TRACKING_URI = _configured_tracking_uri
+else:
+    MLFLOW_TRACKING_URI = (
+        f"sqlite:///{MLFLOW_DB_PATH}"
+    )
+
+# Local artifact directory.
+#
+# This path is relevant only when MurphAI itself is using local
+# SQLite tracking. With a remote Tracking Server, the server owns
+# the artifact destination and this local directory is not used.
 MLFLOW_ARTIFACT_ROOT = Path(
     os.getenv(
         "MLFLOW_ARTIFACT_ROOT",
@@ -50,27 +75,46 @@ MLFLOW_ARTIFACT_ROOT = Path(
 EXPERIMENT_NAME = "murphai-worker-job-matching"
 
 
+def is_local_sqlite_tracking() -> bool:
+    """
+    Return whether MurphAI is using local SQLite tracking.
+
+    This distinction is important because local artifact
+    directories should only be created by the application
+    when it is also responsible for local MLflow storage.
+    """
+
+    return MLFLOW_TRACKING_URI.startswith(
+        "sqlite:///"
+    )
+
+
 def configure_mlflow() -> None:
     """
-    Configure the MLflow tracking database and experiment.
+    Configure MLflow tracking and the MurphAI experiment.
 
-    A new experiment is created with the configured artifact
-    root when it does not already exist.
+    For local SQLite tracking, MurphAI creates the local database
+    directory and artifact directory as needed.
 
-    Existing experiments keep the artifact location that was
-    stored when they were created.
+    For a remote Tracking Server, MurphAI connects to the configured
+    server and allows that server to control backend and artifact
+    storage.
     """
 
-    MLFLOW_DB_PATH.parent.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+    # Local filesystem preparation is required only when the
+    # application itself owns the SQLite database and artifacts.
+    if is_local_sqlite_tracking():
+        MLFLOW_DB_PATH.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
-    MLFLOW_ARTIFACT_ROOT.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
+        MLFLOW_ARTIFACT_ROOT.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
 
+    # Tell the MLflow client which tracking backend to use.
     mlflow.set_tracking_uri(
         MLFLOW_TRACKING_URI
     )
@@ -80,12 +124,20 @@ def configure_mlflow() -> None:
     )
 
     if experiment is None:
-        mlflow.create_experiment(
-            name=EXPERIMENT_NAME,
-            artifact_location=str(
-                MLFLOW_ARTIFACT_ROOT
-            ),
-        )
+        # A remote Tracking Server should control its own artifact
+        # destination. Therefore artifact_location is provided only
+        # for local SQLite tracking.
+        if is_local_sqlite_tracking():
+            mlflow.create_experiment(
+                name=EXPERIMENT_NAME,
+                artifact_location=str(
+                    MLFLOW_ARTIFACT_ROOT
+                ),
+            )
+        else:
+            mlflow.create_experiment(
+                name=EXPERIMENT_NAME,
+            )
 
     mlflow.set_experiment(
         EXPERIMENT_NAME
@@ -96,9 +148,8 @@ def start_run(run_name: str):
     """
     Start an MLflow run inside the MurphAI experiment.
 
-    The experiment is configured before starting the run so
-    training code does not need to know how MLflow storage
-    is configured.
+    Training code does not need to know whether MLflow is running
+    locally or behind a remote Tracking Server.
     """
 
     configure_mlflow()

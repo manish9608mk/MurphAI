@@ -33,7 +33,11 @@ CHAMPION_ALIAS = "champion"
 def get_mlflow_client() -> MlflowClient:
     """
     Create an MLflow client connected to MurphAI's
-    local tracking database.
+    configured MLflow tracking backend.
+
+    The backend may be a local SQLite database during
+    development or a remote MLflow Tracking Server in
+    production.
     """
 
     mlflow.set_tracking_uri(
