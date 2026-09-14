@@ -1,51 +1,52 @@
 services:
 
-  # MurphAI Backend + ML Service
-
+  # MurphAI backend API and ML inference service.
   backend:
     build:
       context: .
       dockerfile: infrastructure/docker/Dockerfile
 
-    # Container name used for local development.
+    # Stable container name for local development.
     container_name: murphai-backend
 
-    # Load secrets and configuration from the local .env file.
+    # Load local development secrets and application settings.
     env_file:
       - .env
 
-    # Start the backend only after PostgreSQL is healthy.
+    # Override MLflow storage paths for the Docker environment.
+    #
+    # The container must not use the host Mac's absolute path
+    # for MLflow artifacts or its tracking database.
+    environment:
+      MLFLOW_DB_PATH: /app/.mlflow/mlflow.db
+      MLFLOW_ARTIFACT_ROOT: /app/mlruns
+
+    # Start the backend only after PostgreSQL passes its healthcheck.
     depends_on:
       postgres:
         condition: service_healthy
 
-    # Expose the FastAPI application on port 8000.
+    # Expose the FastAPI API on localhost:8000.
     ports:
       - "8000:8000"
 
-    # Persist MLflow model registry/artifacts.
+    # Persist Docker's MLflow metadata and model artifacts.
+    #
+    # Named volumes keep these files across container recreation
+    # without depending on the host machine's filesystem layout.
     volumes:
+      - mlflow_data:/app/.mlflow
+      - mlruns_data:/app/mlruns
 
-      # MLflow metadata database.
-      - ./mlflow.db:/app/mlflow.db
-
-      # Existing MLflow model artifacts.
-      #
-      # MLflow 3 stored the artifact location using
-      # this absolute path, so the same path is mounted
-      # inside the container for local development.
-      - ./mlruns:/Users/manishkumar/Documents/Explorer/MurphAI/mlruns
-
-    # Restart the container automatically if it stops unexpectedly.
+    # Restart the backend automatically if it stops unexpectedly.
     restart: unless-stopped
 
 
-  # MurphAI PostgreSQL Database
-
+  # MurphAI PostgreSQL database.
   postgres:
     image: postgres:16
 
-    # Container name used for local development.
+    # Stable container name for local development.
     container_name: murphai-postgres
 
     # Local development database configuration.
@@ -54,22 +55,30 @@ services:
       POSTGRES_USER: murphai
       POSTGRES_PASSWORD: murphai_dev_password
 
-    # Persist PostgreSQL data between container restarts.
+    # Persist PostgreSQL data across container recreation.
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
-    # Check whether PostgreSQL is ready to accept connections.
+    # PostgreSQL is considered healthy only when it accepts connections.
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U murphai -d murphai"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-    # Restart the database automatically if it stops unexpectedly.
+    # Restart PostgreSQL automatically if it stops unexpectedly.
     restart: unless-stopped
 
 
-# Persistent Docker volumes
+# Persistent Docker volumes.
 
 volumes:
+
+  # MLflow SQLite metadata database.
+  mlflow_data:
+
+  # MLflow model artifacts.
+  mlruns_data:
+
+  # MurphAI PostgreSQL data.
   postgres_data:

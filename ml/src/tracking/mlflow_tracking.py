@@ -1,66 +1,104 @@
 """
 MLflow tracking utilities for MurphAI.
 
-Responsibilities:
-    1. Configure the MLflow experiment.
-    2. Start an MLflow run.
-    3. Log model parameters.
-    4. Log evaluation metrics.
-    5. Log the trained model.
+This module provides the common MLflow configuration used by
+model training, model registration, and model inference.
+
+Storage is environment-configurable so the same application
+can run on a developer machine, inside Docker, or in CI
+without storing machine-specific filesystem paths.
 """
 
+import os
 from pathlib import Path
 
 import mlflow
 import mlflow.sklearn
 
 
-# ============================================================
-# Project Configuration
-# ============================================================
+# MurphAI MLflow storage configuration
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
-MLFLOW_DB_PATH = PROJECT_ROOT / "mlflow.db"
+# The MLflow metadata database contains experiments, runs,
+# registered models, versions, and aliases.
+#
+# Local development defaults to the project directory.
+# Docker/production can override this with MLFLOW_DB_PATH.
+MLFLOW_DB_PATH = Path(
+    os.getenv(
+        "MLFLOW_DB_PATH",
+        str(PROJECT_ROOT / "mlflow.db"),
+    )
+)
 
-MLFLOW_TRACKING_URI = f"sqlite:///{MLFLOW_DB_PATH}"
+MLFLOW_TRACKING_URI = (
+    f"sqlite:///{MLFLOW_DB_PATH}"
+)
+
+# Model files logged by MLflow are stored under this directory.
+#
+# Local development defaults to project/mlruns.
+# Docker can override this with /app/mlruns.
+MLFLOW_ARTIFACT_ROOT = Path(
+    os.getenv(
+        "MLFLOW_ARTIFACT_ROOT",
+        str(PROJECT_ROOT / "mlruns"),
+    )
+)
 
 EXPERIMENT_NAME = "murphai-worker-job-matching"
 
 
-# ============================================================
-# MLflow Configuration
-# ============================================================
-
-
 def configure_mlflow() -> None:
     """
-    Configure the local MLflow tracking database
-    and MurphAI experiment.
+    Configure the MLflow tracking database and experiment.
+
+    A new experiment is created with the configured artifact
+    root when it does not already exist.
+
+    Existing experiments keep the artifact location that was
+    stored when they were created.
     """
 
-    mlflow.set_tracking_uri(MLFLOW_TRACKING_URI)
+    MLFLOW_DB_PATH.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
-    mlflow.set_experiment(EXPERIMENT_NAME)
+    MLFLOW_ARTIFACT_ROOT.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
+    mlflow.set_tracking_uri(
+        MLFLOW_TRACKING_URI
+    )
 
-# ============================================================
-# Run Management
-# ============================================================
+    experiment = mlflow.get_experiment_by_name(
+        EXPERIMENT_NAME
+    )
+
+    if experiment is None:
+        mlflow.create_experiment(
+            name=EXPERIMENT_NAME,
+            artifact_location=str(
+                MLFLOW_ARTIFACT_ROOT
+            ),
+        )
+
+    mlflow.set_experiment(
+        EXPERIMENT_NAME
+    )
 
 
 def start_run(run_name: str):
     """
-    Start an MLflow experiment run.
+    Start an MLflow run inside the MurphAI experiment.
 
-    Parameters
-    ----------
-    run_name : str
-        Name of the MLflow run.
-
-    Returns
-    -------
-    Active MLflow run context.
+    The experiment is configured before starting the run so
+    training code does not need to know how MLflow storage
+    is configured.
     """
 
     configure_mlflow()
@@ -70,58 +108,49 @@ def start_run(run_name: str):
     )
 
 
-# ============================================================
-# Parameter Logging
-# ============================================================
-
-
 def log_parameters(parameters: dict) -> None:
     """
-    Log model parameters to the active MLflow run.
+    Log model parameters for the active MLflow run.
 
     Parameters
     ----------
     parameters : dict
-        Dictionary containing model parameters.
+        Model configuration values such as estimators,
+        depth, and random seed.
     """
 
     mlflow.log_params(parameters)
 
 
-# ============================================================
-# Metric Logging
-# ============================================================
-
-
 def log_metrics(metrics: dict) -> None:
     """
-    Log evaluation metrics to the active MLflow run.
+    Log evaluation metrics for the active MLflow run.
 
     Parameters
     ----------
     metrics : dict
-        Dictionary containing evaluation metrics.
+        Evaluation results such as accuracy, recall,
+        F1 score, and ROC-AUC.
     """
 
     mlflow.log_metrics(metrics)
 
 
-# ============================================================
-# Model Logging
-# ============================================================
-
-
-def log_model(model, artifact_path: str = "model") -> None:
+def log_model(
+    model,
+    artifact_path: str = "model",
+) -> None:
     """
-    Log a scikit-learn model to MLflow.
+    Log a trained scikit-learn model to MLflow.
 
     Parameters
     ----------
-    model
+    model :
         Trained scikit-learn model.
 
     artifact_path : str
-        Name used for the logged model.
+        Logical artifact name used by model registration
+        and later champion-model loading.
     """
 
     mlflow.sklearn.log_model(

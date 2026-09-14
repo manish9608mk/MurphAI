@@ -15,21 +15,17 @@ from ml.src.tracking.mlflow_tracking import (
 )
 
 
-# ============================================================
-# Test Configuration
-# ============================================================
-
+# MLflow test configuration
 
 @pytest.fixture(autouse=True)
 def isolated_mlflow(tmp_path, monkeypatch):
     """
-    Use a temporary MLflow database for every test.
-
-    This prevents tests from modifying the real
-    project mlflow.db database.
+    Give every test its own MLflow database and artifact
+    directory so tests cannot modify real development data.
     """
 
     test_db_path = tmp_path / "mlflow_test.db"
+    test_artifact_root = tmp_path / "mlruns"
 
     test_tracking_uri = (
         f"sqlite:///{test_db_path}"
@@ -41,26 +37,31 @@ def isolated_mlflow(tmp_path, monkeypatch):
         test_tracking_uri,
     )
 
+    monkeypatch.setattr(
+        mlflow_tracking,
+        "MLFLOW_DB_PATH",
+        test_db_path,
+    )
+
+    monkeypatch.setattr(
+        mlflow_tracking,
+        "MLFLOW_ARTIFACT_ROOT",
+        test_artifact_root,
+    )
+
     mlflow.set_tracking_uri(
         test_tracking_uri
     )
 
     yield
 
-    # Make sure no active run remains after a test.
     if mlflow.active_run() is not None:
         mlflow.end_run()
 
 
-# ============================================================
-# Tracking URI
-# ============================================================
-
-
 def test_mlflow_tracking_uri():
     """
-    Verify that the production tracking URI
-    uses SQLite.
+    Verify that MurphAI uses SQLite for local MLflow tracking.
     """
 
     assert MLFLOW_TRACKING_URI.startswith(
@@ -68,15 +69,10 @@ def test_mlflow_tracking_uri():
     )
 
 
-# ============================================================
-# MLflow Configuration
-# ============================================================
-
-
 def test_configure_mlflow():
     """
-    Verify that MurphAI's MLflow experiment
-    can be configured successfully.
+    Verify that the MurphAI MLflow experiment is created
+    and can be retrieved successfully.
     """
 
     configure_mlflow()
@@ -89,14 +85,32 @@ def test_configure_mlflow():
     assert experiment.name == EXPERIMENT_NAME
 
 
-# ============================================================
-# Run Management
-# ============================================================
+def test_mlflow_artifact_location():
+    """
+    Verify that MLflow stores artifacts under the configured
+    artifact root for the current environment.
+    """
+
+    configure_mlflow()
+
+    experiment = mlflow.get_experiment_by_name(
+        EXPERIMENT_NAME
+    )
+
+    assert experiment is not None
+
+    expected_root = (
+        mlflow_tracking.MLFLOW_ARTIFACT_ROOT
+    )
+
+    assert experiment.artifact_location == str(
+        expected_root
+    )
 
 
 def test_start_run():
     """
-    Verify that an MLflow run can be started.
+    Verify that MurphAI can start a named MLflow run.
     """
 
     with start_run("test-run") as run:
@@ -105,15 +119,10 @@ def test_start_run():
         assert run.info.run_name == "test-run"
 
 
-# ============================================================
-# Parameter Logging
-# ============================================================
-
-
 def test_log_parameters():
     """
-    Verify that model parameters are logged
-    correctly.
+    Verify that model parameters are recorded correctly
+    in an MLflow run.
     """
 
     with start_run("parameter-test"):
@@ -139,15 +148,10 @@ def test_log_parameters():
         assert data.params["n_estimators"] == "200"
 
 
-# ============================================================
-# Metric Logging
-# ============================================================
-
-
 def test_log_metrics():
     """
-    Verify that evaluation metrics are logged
-    correctly.
+    Verify that evaluation metrics are recorded correctly
+    in an MLflow run.
     """
 
     with start_run("metric-test"):
@@ -178,15 +182,10 @@ def test_log_metrics():
         )
 
 
-# ============================================================
-# Model Logging
-# ============================================================
-
-
 def test_log_model():
     """
-    Verify that a scikit-learn model can be
-    logged to MLflow.
+    Verify that a scikit-learn model can be logged as an
+    MLflow model artifact.
     """
 
     model = LogisticRegression()
