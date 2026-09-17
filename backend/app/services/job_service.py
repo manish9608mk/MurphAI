@@ -42,6 +42,17 @@ def get_jobs(db: Session):
     return db.query(Job).all()
 
 
+def get_my_jobs(
+    db: Session,
+    customer_id: int,
+):
+    return (
+        db.query(Job)
+        .filter(Job.customer_id == customer_id)
+        .all()
+    )
+
+
 def get_job(
     db: Session,
     job_id: int,

@@ -56,6 +56,20 @@ def get_all_users(
 
 
 @router.get(
+    "/me",
+    response_model=UserResponse,
+)
+def get_current_user(
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    return get_user(
+        db,
+        current_user_id,
+    )
+
+
+@router.get(
     "/{user_id}",
     response_model=UserResponse,
 )

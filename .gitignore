@@ -26,3 +26,7 @@ mlflow.db
 
 
 mlruns/
+
+
+# Node
+node_modules/
