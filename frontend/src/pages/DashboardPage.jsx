@@ -18,8 +18,11 @@ import {
   X,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
-
-import { getCurrentUser, getMyJobs, logoutUser } from '../services/api'
+import {
+  getCurrentUser,
+  getMyJobs,
+  logoutUser,
+} from '../services/api'
 
 function DashboardPage() {
   const navigate = useNavigate()
@@ -64,11 +67,18 @@ function DashboardPage() {
   }
 
   const stats = useMemo(() => {
-    const open = jobs.filter((job) => job.status === 'open').length
-    const assigned = jobs.filter((job) => job.status === 'assigned').length
+    const open = jobs.filter(
+      (job) => job.status === 'open',
+    ).length
+
+    const assigned = jobs.filter(
+      (job) => job.status === 'assigned',
+    ).length
+
     const inProgress = jobs.filter(
       (job) => job.status === 'in_progress',
     ).length
+
     const completed = jobs.filter(
       (job) => job.status === 'completed',
     ).length
@@ -89,7 +99,9 @@ function DashboardPage() {
         <div className="dashboard-loading-screen">
           <div className="dashboard-loading-card">
             <div className="dashboard-loading-spinner" />
+
             <h2>Loading your workspace...</h2>
+
             <p>
               Getting your profile and jobs ready.
             </p>
@@ -109,6 +121,7 @@ function DashboardPage() {
             </div>
 
             <h1>We couldn't load your workspace</h1>
+
             <p>{error}</p>
 
             <button
@@ -138,11 +151,15 @@ function DashboardPage() {
 
       <aside
         className={`dashboard-sidebar ${
-          sidebarOpen ? 'dashboard-sidebar-open' : ''
+          sidebarOpen
+            ? 'dashboard-sidebar-open'
+            : ''
         }`}
       >
         <div className="dashboard-brand">
-          <div className="dashboard-brand-mark">M</div>
+          <div className="dashboard-brand-mark">
+            M
+          </div>
 
           <div>
             <strong>MurphAI</strong>
@@ -163,18 +180,24 @@ function DashboardPage() {
           <button
             type="button"
             className="dashboard-nav-item dashboard-nav-item-active"
-            onClick={closeSidebar}
+            onClick={() => navigate('/dashboard')}
           >
             <LayoutDashboard size={19} />
             <span>Dashboard</span>
           </button>
 
-          <button type="button" className="dashboard-nav-item">
+          <button
+            type="button"
+            className="dashboard-nav-item"
+          >
             <Search size={19} />
             <span>Browse Jobs</span>
           </button>
 
-          <button type="button" className="dashboard-nav-item">
+          <button
+            type="button"
+            className="dashboard-nav-item"
+          >
             <FolderKanban size={19} />
             <span>My Jobs</span>
 
@@ -185,17 +208,26 @@ function DashboardPage() {
             )}
           </button>
 
-          <button type="button" className="dashboard-nav-item">
+          <button
+            type="button"
+            className="dashboard-nav-item"
+          >
             <Bell size={19} />
             <span>Notifications</span>
           </button>
 
-          <button type="button" className="dashboard-nav-item">
+          <button
+            type="button"
+            className="dashboard-nav-item"
+          >
             <UserRound size={19} />
             <span>Profile</span>
           </button>
 
-          <button type="button" className="dashboard-nav-item">
+          <button
+            type="button"
+            className="dashboard-nav-item"
+          >
             <Settings size={19} />
             <span>Settings</span>
           </button>
@@ -203,7 +235,9 @@ function DashboardPage() {
 
         <div className="dashboard-sidebar-bottom">
           <div className="dashboard-help-card">
-            <div className="dashboard-help-icon">✦</div>
+            <div className="dashboard-help-icon">
+              ✦
+            </div>
 
             <strong>Need help?</strong>
 
@@ -241,6 +275,7 @@ function DashboardPage() {
 
           <div className="dashboard-search">
             <Search size={18} />
+
             <input
               type="text"
               placeholder="Search for jobs, skills, or workers..."
@@ -253,6 +288,7 @@ function DashboardPage() {
               type="button"
               className="dashboard-icon-button"
               aria-label="Notifications"
+              title="Notifications"
             >
               <Bell size={19} />
               <span className="dashboard-notification-dot" />
@@ -260,11 +296,16 @@ function DashboardPage() {
 
             <div className="dashboard-user-menu">
               <div className="dashboard-avatar">
-                {user.name?.charAt(0)?.toUpperCase()}
+                {user.name
+                  ?.charAt(0)
+                  ?.toUpperCase()}
               </div>
 
               <div className="dashboard-user-copy">
-                <strong>Hello, {user.name?.split(' ')[0]}</strong>
+                <strong>
+                  Hello, {user.name?.split(' ')[0]}
+                </strong>
+
                 <span>Customer</span>
               </div>
 
@@ -287,14 +328,18 @@ function DashboardPage() {
               </h1>
 
               <p>
-                Post work, find skilled people, and build a
-                verified professional history with MurphAI.
+                Post work, find skilled people, and
+                build a verified professional history
+                with MurphAI.
               </p>
 
               <div className="dashboard-hero-actions">
                 <button
                   type="button"
                   className="dashboard-primary-button"
+                  onClick={() =>
+                    navigate('/jobs/new')
+                  }
                 >
                   <Plus size={18} />
                   Post a Job
@@ -338,7 +383,9 @@ function DashboardPage() {
               <div>
                 <span>Total Jobs</span>
                 <strong>{stats.total}</strong>
-                <small>Jobs posted by you</small>
+                <small>
+                  Jobs posted by you
+                </small>
               </div>
             </article>
 
@@ -350,7 +397,9 @@ function DashboardPage() {
               <div>
                 <span>Active Jobs</span>
                 <strong>{stats.active}</strong>
-                <small>Currently moving forward</small>
+                <small>
+                  Currently moving forward
+                </small>
               </div>
             </article>
 
@@ -362,7 +411,9 @@ function DashboardPage() {
               <div>
                 <span>In Progress</span>
                 <strong>{stats.inProgress}</strong>
-                <small>Work currently underway</small>
+                <small>
+                  Work currently underway
+                </small>
               </div>
             </article>
 
@@ -374,7 +425,9 @@ function DashboardPage() {
               <div>
                 <span>Completed</span>
                 <strong>{stats.completed}</strong>
-                <small>Verified outcomes</small>
+                <small>
+                  Verified outcomes
+                </small>
               </div>
             </article>
           </section>
@@ -408,13 +461,16 @@ function DashboardPage() {
                   <h3>No jobs yet</h3>
 
                   <p>
-                    Your posted jobs will appear here once you
-                    create your first one.
+                    Your posted jobs will appear here
+                    once you create your first one.
                   </p>
 
                   <button
                     type="button"
                     className="dashboard-primary-button"
+                    onClick={() =>
+                      navigate('/jobs/new')
+                    }
                   >
                     <Plus size={17} />
                     Post your first job
@@ -453,8 +509,12 @@ function DashboardPage() {
 
                       <div className="dashboard-job-budget">
                         <span>Budget</span>
+
                         <strong>
-                          ₹{Number(job.budget).toLocaleString('en-IN')}
+                          ₹
+                          {Number(
+                            job.budget,
+                          ).toLocaleString('en-IN')}
                         </strong>
                       </div>
                     </article>
@@ -481,37 +541,59 @@ function DashboardPage() {
                   <ShieldCheck size={38} />
                 </div>
 
-                <strong>Building your trust profile</strong>
+                <strong>
+                  Building your trust profile
+                </strong>
 
                 <p>
-                  Your completed work, confirmations, payments,
-                  and reputation will become part of your verified
-                  professional history.
+                  Your completed work, confirmations,
+                  payments, and reputation will become
+                  part of your verified professional
+                  history.
                 </p>
               </div>
 
               <div className="dashboard-trust-steps">
                 <div className="dashboard-trust-step">
                   <span>01</span>
+
                   <div>
-                    <strong>Post meaningful work</strong>
-                    <p>Create jobs with clear outcomes.</p>
+                    <strong>
+                      Post meaningful work
+                    </strong>
+
+                    <p>
+                      Create jobs with clear outcomes.
+                    </p>
                   </div>
                 </div>
 
                 <div className="dashboard-trust-step">
                   <span>02</span>
+
                   <div>
-                    <strong>Complete the workflow</strong>
-                    <p>Assignment → Work → Evidence.</p>
+                    <strong>
+                      Complete the workflow
+                    </strong>
+
+                    <p>
+                      Assignment → Work → Evidence.
+                    </p>
                   </div>
                 </div>
 
                 <div className="dashboard-trust-step">
                   <span>03</span>
+
                   <div>
-                    <strong>Build verified history</strong>
-                    <p>Confirmation → Payment → Reputation.</p>
+                    <strong>
+                      Build verified history
+                    </strong>
+
+                    <p>
+                      Confirmation → Payment →
+                      Reputation.
+                    </p>
                   </div>
                 </div>
               </div>
@@ -525,58 +607,83 @@ function DashboardPage() {
                   QUICK ACTIONS
                 </span>
 
-                <h2>Move your work forward</h2>
+                <h2>
+                  Move your work forward
+                </h2>
               </div>
             </div>
 
             <div className="dashboard-quick-grid">
-              <button type="button" className="dashboard-quick-card">
+              <button
+                type="button"
+                className="dashboard-quick-card"
+                onClick={() =>
+                  navigate('/jobs/new')
+                }
+              >
                 <div className="dashboard-quick-icon">
                   <Plus size={21} />
                 </div>
 
                 <div>
                   <strong>Post a Job</strong>
-                  <span>Find skilled workers</span>
+                  <span>
+                    Find skilled workers
+                  </span>
                 </div>
 
                 <ArrowRight size={17} />
               </button>
 
-              <button type="button" className="dashboard-quick-card">
+              <button
+                type="button"
+                className="dashboard-quick-card"
+              >
                 <div className="dashboard-quick-icon">
                   <Search size={21} />
                 </div>
 
                 <div>
                   <strong>Browse Workers</strong>
-                  <span>Explore available talent</span>
+                  <span>
+                    Explore available talent
+                  </span>
                 </div>
 
                 <ArrowRight size={17} />
               </button>
 
-              <button type="button" className="dashboard-quick-card">
+              <button
+                type="button"
+                className="dashboard-quick-card"
+              >
                 <div className="dashboard-quick-icon">
                   <FolderKanban size={21} />
                 </div>
 
                 <div>
                   <strong>Manage Jobs</strong>
-                  <span>Track your projects</span>
+                  <span>
+                    Track your projects
+                  </span>
                 </div>
 
                 <ArrowRight size={17} />
               </button>
 
-              <button type="button" className="dashboard-quick-card">
+              <button
+                type="button"
+                className="dashboard-quick-card"
+              >
                 <div className="dashboard-quick-icon">
                   <ShieldCheck size={21} />
                 </div>
 
                 <div>
                   <strong>Trust & Reputation</strong>
-                  <span>View your work history</span>
+                  <span>
+                    View your work history
+                  </span>
                 </div>
 
                 <ArrowRight size={17} />
@@ -585,8 +692,13 @@ function DashboardPage() {
           </section>
 
           <footer className="dashboard-footer">
-            <span>© {new Date().getFullYear()} MurphAI</span>
-            <span>Get work done. Build trust that lasts.</span>
+            <span>
+              © {new Date().getFullYear()} MurphAI
+            </span>
+
+            <span>
+              Get work done. Build trust that lasts.
+            </span>
           </footer>
         </div>
       </section>
