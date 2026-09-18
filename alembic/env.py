@@ -19,6 +19,7 @@ from backend.app.models.evidence import Evidence
 from backend.app.models.confirmation import Confirmation
 from backend.app.models.payment import Payment
 from backend.app.models.reputation import Reputation
+from backend.app.models.job_interest import JobInterest
 
 
 # Alembic Config object
