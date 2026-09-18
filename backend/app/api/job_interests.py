@@ -9,6 +9,7 @@ from backend.app.core.security import get_current_user_id
 from backend.app.schemas.job_interest import (
     JobInterestCreate,
     JobInterestResponse,
+    JobInterestWorkerResponse,
 )
 from backend.app.services.job_interest_service import (
     create_job_interest,
@@ -97,7 +98,7 @@ def withdraw_interest(
 
 @job_router.get(
     "/{job_id}/interests",
-    response_model=list[JobInterestResponse],
+    response_model=list[JobInterestWorkerResponse],
 )
 def get_interests_for_job(
     job_id: int,

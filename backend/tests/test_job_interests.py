@@ -579,3 +579,62 @@ def test_job_interest_requires_authentication(
     )
 
     assert response.status_code == 401
+
+
+def test_customer_can_view_worker_details_for_job_interest(
+    client,
+    db,
+):
+    customer_id = create_test_user(
+        db,
+        "Customer Worker Details",
+        "customer-worker-details@example.com",
+    )
+
+    worker_user_id = create_test_user(
+        db,
+        "Rahul Sharma",
+        "rahul-worker-details@example.com",
+    )
+
+    create_worker(
+        client,
+        worker_user_id,
+    )
+
+    job_id = create_job(
+        client,
+        customer_id,
+    )
+
+    interest_response = client.post(
+        "/job-interests/",
+        headers=auth_headers(worker_user_id),
+        json={
+            "job_id": job_id,
+        },
+    )
+
+    assert interest_response.status_code == 201
+
+    response = client.get(
+        f"/jobs/{job_id}/interests",
+        headers=auth_headers(customer_id),
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert len(data) == 1
+
+    worker = data[0]
+
+    assert worker["job_id"] == job_id
+    assert worker["worker_id"] > 0
+    assert worker["status"] == "pending"
+
+    assert worker["worker_name"] == "Rahul Sharma"
+    assert worker["location"] == "Bhopal"
+    assert worker["experience_years"] == 5
+    assert worker["is_available"] is True

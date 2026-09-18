@@ -12,7 +12,7 @@ from backend.app.core.exceptions import (
 from backend.app.models.job import Job
 from backend.app.models.job_interest import JobInterest
 from backend.app.models.worker import Worker
-
+from backend.app.models.user import User
 
 def create_job_interest(
     db: Session,
@@ -138,10 +138,10 @@ def get_job_interests(
     current_user_id: int,
 ):
     """
-    Return interests submitted for a job.
+    Return workers who expressed interest in a job.
 
-    Only the customer who owns the job can
-    access this list.
+    Only the customer who owns the job can access
+    this information.
     """
 
     job = (
@@ -159,15 +159,45 @@ def get_job_interests(
             "for this job"
         )
 
-    return (
-        db.query(JobInterest)
-        .filter(
-            JobInterest.job_id == job_id
+    rows = (
+        db.query(
+            JobInterest,
+            Worker,
+            User,
         )
-        .order_by(JobInterest.created_at.asc())
+        .join(
+            Worker,
+            JobInterest.worker_id == Worker.id,
+        )
+        .join(
+            User,
+            Worker.user_id == User.id,
+        )
+        .filter(
+            JobInterest.job_id == job_id,
+        )
+        .order_by(
+            JobInterest.created_at.asc(),
+        )
         .all()
     )
 
+    return [
+        {
+            "id": interest.id,
+            "job_id": interest.job_id,
+            "worker_id": worker.id,
+            "status": interest.status,
+            "worker_name": user.name,
+            "bio": worker.bio,
+            "location": worker.location,
+            "experience_years": worker.experience_years,
+            "is_available": worker.is_available,
+            "created_at": interest.created_at,
+            "updated_at": interest.updated_at,
+        }
+        for interest, worker, user in rows
+    ]
 
 def withdraw_job_interest(
     db: Session,
