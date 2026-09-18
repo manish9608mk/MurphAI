@@ -71,6 +71,13 @@ export function getMyJobs() {
   })
 }
 
+export function createJob(jobData) {
+  return request('/jobs/', {
+    method: 'POST',
+    body: JSON.stringify(jobData),
+  })
+}
+
 export function logoutUser() {
   localStorage.removeItem('access_token')
 }
