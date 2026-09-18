@@ -42,6 +42,27 @@ def get_jobs(db: Session):
     return db.query(Job).all()
 
 
+def get_available_jobs(
+    db: Session,
+    current_user_id: int,
+):
+    """
+    Return marketplace jobs available to the
+    authenticated worker.
+
+    Only open jobs owned by another user are returned.
+    """
+
+    return (
+        db.query(Job)
+        .filter(
+            Job.status == "open",
+            Job.customer_id != current_user_id,
+        )
+        .order_by(Job.created_at.desc())
+        .all()
+    )
+
 def get_my_jobs(
     db: Session,
     customer_id: int,

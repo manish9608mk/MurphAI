@@ -11,6 +11,7 @@ from backend.app.schemas.job import (
 from backend.app.services.job_service import (
     create_job,
     get_jobs,
+    get_available_jobs,
     get_my_jobs,
     get_job,
     update_job,
@@ -59,6 +60,25 @@ def get_all_jobs(
 ):
     return get_jobs(db)
 
+
+@router.get(
+    "/available",
+    response_model=list[JobResponse],
+)
+def get_available_jobs_for_worker(
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(
+        get_current_user_id
+    ),
+):
+    """
+    Return open jobs available in the marketplace.
+    """
+
+    return get_available_jobs(
+        db,
+        current_user_id,
+    )
 
 @router.get(
     "/mine",
