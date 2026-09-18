@@ -72,6 +72,22 @@ class WorkerUnavailableException(Exception):
 
 
 # -----------------------------
+# Job Interest Exceptions
+# -----------------------------
+
+class JobInterestNotFoundException(Exception):
+    pass
+
+
+class JobInterestAlreadyExistsException(Exception):
+    pass
+
+
+class InvalidJobInterestTransitionException(Exception):
+    pass
+
+
+# -----------------------------
 # Authorization Exception
 # -----------------------------
 # Used when a logged-in user

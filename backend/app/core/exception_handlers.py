@@ -17,6 +17,9 @@ from backend.app.core.exceptions import (
     InvalidAssignmentTransitionException,
     WorkerUnavailableException,
     PermissionDeniedException,
+    JobInterestNotFoundException,
+    JobInterestAlreadyExistsException,
+    InvalidJobInterestTransitionException,
 )
 
 
@@ -178,6 +181,42 @@ async def worker_unavailable_exception_handler(
         },
     )
 
+# Job Interest Exception Handlers
+
+async def job_interest_not_found_exception_handler(
+    request: Request,
+    exc: JobInterestNotFoundException,
+):
+    return JSONResponse(
+        status_code=404,
+        content={
+            "detail": "Job interest not found",
+        },
+    )
+
+
+async def job_interest_already_exists_exception_handler(
+    request: Request,
+    exc: JobInterestAlreadyExistsException,
+):
+    return JSONResponse(
+        status_code=409,
+        content={
+            "detail": "Job interest already exists",
+        },
+    )
+
+
+async def invalid_job_interest_transition_handler(
+    request: Request,
+    exc: InvalidJobInterestTransitionException,
+):
+    return JSONResponse(
+        status_code=400,
+        content={
+            "detail": str(exc),
+        },
+    )
 
 # Permission Exception Handler
 

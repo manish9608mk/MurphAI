@@ -14,6 +14,9 @@ from backend.app.core.exception_handlers import (
     email_already_registered_handler,
     invalid_assignment_transition_handler,
     invalid_job_status_transition_handler,
+    invalid_job_interest_transition_handler,
+    job_interest_already_exists_exception_handler,
+    job_interest_not_found_exception_handler,
     job_not_found_handler,
     permission_denied_handler,
     unexpected_exception_handler,
@@ -30,6 +33,9 @@ from backend.app.core.exceptions import (
     EmailAlreadyRegisteredException,
     InvalidAssignmentTransitionException,
     InvalidJobStatusTransitionException,
+    InvalidJobInterestTransitionException,
+    JobInterestAlreadyExistsException,
+    JobInterestNotFoundException,
     JobNotFoundException,
     PermissionDeniedException,
     UserNotFoundException,
@@ -47,6 +53,10 @@ from backend.app.api.assignments import router as assignments_router
 from backend.app.api.auth import router as auth_router
 from backend.app.api.confirmation import router as confirmation_router
 from backend.app.api.evidence import router as evidence_router
+from backend.app.api.job_interests import (
+    router as job_interests_router,
+    job_router as job_interests_job_router,
+)
 from backend.app.api.jobs import router as jobs_router
 from backend.app.api.ml import router as ml_router
 from backend.app.api.payment import router as payment_router
@@ -160,6 +170,21 @@ app.add_exception_handler(
 )
 
 app.add_exception_handler(
+    JobInterestNotFoundException,
+    job_interest_not_found_exception_handler,
+)
+
+app.add_exception_handler(
+    JobInterestAlreadyExistsException,
+    job_interest_already_exists_exception_handler,
+)
+
+app.add_exception_handler(
+    InvalidJobInterestTransitionException,
+    invalid_job_interest_transition_handler,
+)
+
+app.add_exception_handler(
     PermissionDeniedException,
     permission_denied_handler,
 )
@@ -178,6 +203,8 @@ app.include_router(jobs_router)
 app.include_router(workers_router)
 app.include_router(skills_router)
 app.include_router(assignments_router)
+app.include_router(job_interests_router)
+app.include_router(job_interests_job_router)
 app.include_router(work_router)
 app.include_router(evidence_router)
 app.include_router(confirmation_router)
