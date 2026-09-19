@@ -6,6 +6,7 @@ import {
   ChevronDown,
   Clock3,
   MapPin,
+  PlayCircle,
   ShieldCheck,
   UserRound,
   XCircle,
@@ -13,9 +14,12 @@ import {
 import { useNavigate } from 'react-router-dom'
 import {
   acceptAssignment,
+  createWork,
   getCurrentUser,
   getMyAssignments,
+  getMyWorks,
   rejectAssignment,
+  updateWorkStatus,
 } from '../services/api'
 import './WorkerAssignmentsPage.css'
 
@@ -50,6 +54,7 @@ function WorkerAssignmentsPage() {
 
   const [user, setUser] = useState(null)
   const [assignments, setAssignments] = useState([])
+  const [works, setWorks] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [filter, setFilter] = useState('all')
@@ -62,15 +67,19 @@ function WorkerAssignmentsPage() {
     setError('')
 
     try {
-      const [userData, assignmentData] = await Promise.all([
-        getCurrentUser(),
+      const [assignmentData, workData] = await Promise.all([
         getMyAssignments(),
+        getMyWorks(),
       ])
 
-      setUser(userData)
       setAssignments(
         Array.isArray(assignmentData)
           ? assignmentData
+          : [],
+      )
+      setWorks(
+        Array.isArray(workData)
+          ? workData
           : [],
       )
     } catch (err) {
@@ -79,25 +88,34 @@ function WorkerAssignmentsPage() {
           ? err.message
           : 'Unable to load your assignments.',
       )
-    } finally {
-      setLoading(false)
     }
   }
 
   useEffect(() => {
     let cancelled = false
 
-    async function loadAssignments() {
+    async function loadPage() {
       try {
-        setLoading(true)
-        setError('')
-
-        const data = await getMyAssignments()
+        const [userData, assignmentData, workData] =
+          await Promise.all([
+            getCurrentUser(),
+            getMyAssignments(),
+            getMyWorks(),
+          ])
 
         if (!cancelled) {
+          setUser(userData)
           setAssignments(
-            Array.isArray(data) ? data : [],
+            Array.isArray(assignmentData)
+              ? assignmentData
+              : [],
           )
+          setWorks(
+            Array.isArray(workData)
+              ? workData
+              : [],
+          )
+          setLoading(false)
         }
       } catch (err) {
         if (!cancelled) {
@@ -106,15 +124,12 @@ function WorkerAssignmentsPage() {
               ? err.message
               : 'Unable to load your assignments.',
           )
-        }
-      } finally {
-        if (!cancelled) {
           setLoading(false)
         }
       }
     }
 
-    loadAssignments()
+    loadPage()
 
     return () => {
       cancelled = true
@@ -142,6 +157,12 @@ function WorkerAssignmentsPage() {
       filter === 'all' || assignment.status === filter
     ))
   ), [assignments, filter])
+
+  function getWorkForAssignment(assignmentId) {
+    return works.find(
+      (work) => work.assignment_id === assignmentId,
+    )
+  }
 
   async function handleAccept(assignment) {
     if (assignment.status !== 'pending' || actionId) return
@@ -214,6 +235,60 @@ function WorkerAssignmentsPage() {
         err instanceof Error
           ? err.message
           : 'Unable to reject this assignment.',
+      )
+    } finally {
+      setActionId(null)
+    }
+  }
+
+  async function handleStartWork(assignment) {
+    if (assignment.status !== 'accepted' || actionId) return
+
+    const existingWork = getWorkForAssignment(assignment.id)
+
+    if (existingWork) {
+      navigate(`/works/${existingWork.id}`)
+      return
+    }
+
+    setActionId(assignment.id)
+    setActionError('')
+    setActionMessage('')
+
+    try {
+      const createdWork = await createWork(
+        assignment.id,
+        null,
+      )
+
+      const startedWork = await updateWorkStatus(
+        createdWork.id,
+        'in_progress',
+      )
+
+      setWorks((current) => [
+        {
+          ...createdWork,
+          ...startedWork,
+          job_title: assignment.job_title,
+          job_description: assignment.job_description,
+          location: assignment.location,
+          budget: assignment.budget,
+          job_status: 'in_progress',
+        },
+        ...current,
+      ])
+
+      setActionMessage(
+        `Work started for “${assignment.job_title}”.`,
+      )
+
+      navigate(`/works/${createdWork.id}`)
+    } catch (err) {
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to start this work.',
       )
     } finally {
       setActionId(null)
@@ -315,9 +390,9 @@ function WorkerAssignmentsPage() {
               </span>
               <h1>Assignments waiting on you.</h1>
               <p>
-                Review the work customers have chosen you for,
-                then accept the assignment to begin the verified
-                MurphAI workflow.
+                Review customer selections, accept the right
+                work, and move into delivery with a clear
+                record of what you are responsible for.
               </p>
             </div>
 
@@ -338,9 +413,13 @@ function WorkerAssignmentsPage() {
               <small>Work you have agreed to do</small>
             </article>
             <article>
-              <span>Total</span>
-              <strong>{counts.all}</strong>
-              <small>Your assignment history</small>
+              <span>In delivery</span>
+              <strong>
+                {works.filter(
+                  (work) => work.status === 'in_progress',
+                ).length}
+              </strong>
+              <small>Work currently underway</small>
             </article>
           </section>
 
@@ -427,6 +506,9 @@ function WorkerAssignmentsPage() {
                   const isAccepted = assignment.status === 'accepted'
                   const isExpanded = expandedId === assignment.id
                   const isBusy = actionId === assignment.id
+                  const work = getWorkForAssignment(
+                    assignment.id,
+                  )
 
                   return (
                     <article
@@ -523,9 +605,29 @@ function WorkerAssignmentsPage() {
                                 handleAccept(assignment)
                               }
                             >
-                              {isBusy ? 'Updating...' : 'Accept assignment'}
+                              {isBusy
+                                ? 'Updating...'
+                                : 'Accept assignment'}
                             </button>
                           </>
+                        )}
+
+                        {isAccepted && (
+                          <button
+                            type="button"
+                            className="worker-assignment-start-button"
+                            disabled={isBusy}
+                            onClick={() =>
+                              handleStartWork(assignment)
+                            }
+                          >
+                            <PlayCircle size={15} />
+                            {isBusy
+                              ? 'Starting...'
+                              : work
+                                ? 'Continue work'
+                                : 'Start work'}
+                          </button>
                         )}
                       </div>
 
@@ -544,17 +646,22 @@ function WorkerAssignmentsPage() {
                             </div>
                             <div>
                               <span>Job status</span>
-                              <strong>{formatStatus(assignment.job_status)}</strong>
+                              <strong>
+                                {formatStatus(
+                                  assignment.job_status,
+                                )}
+                              </strong>
                             </div>
                           </div>
 
                           <div className="worker-assignment-note">
-                            {isAccepted ? (
+                            {work ? (
                               <>
-                                <CheckCircle2 size={16} />
+                                <PlayCircle size={16} />
                                 <span>
-                                  You accepted this work. MurphAI can now move
-                                  the job into the work and evidence stages.
+                                  Work is already recorded for this
+                                  assignment. Continue from the work
+                                  workspace to update progress.
                                 </span>
                               </>
                             ) : (
@@ -562,7 +669,8 @@ function WorkerAssignmentsPage() {
                                 <UserRound size={16} />
                                 <span>
                                   The customer selected you for this job.
-                                  Accepting creates your commitment to the work.
+                                  Start work when you are ready to begin
+                                  the delivery record.
                                 </span>
                               </>
                             )}

@@ -12,10 +12,9 @@ from backend.app.models.work import Work
 from backend.app.core.exceptions import (
     AssignmentNotFoundException,
     PermissionDeniedException,
+    WorkerNotFoundException,
 )
 
-
-# Create Work
 
 def create_work(
     db: Session,
@@ -27,19 +26,11 @@ def create_work(
     Create a Work record for an accepted assignment.
 
     Only the assigned worker can create the work.
-
-    The Assignment row is locked before checking its state
-    and whether Work already exists. This prevents concurrent
-    Work creation requests for the same assignment from
-    racing.
     """
 
-    # Lock the Assignment row for this transaction.
     assignment = (
         db.query(Assignment)
-        .filter(
-            Assignment.id == assignment_id
-        )
+        .filter(Assignment.id == assignment_id)
         .with_for_update()
         .first()
     )
@@ -47,38 +38,28 @@ def create_work(
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # Assignment must be accepted.
     if assignment.status != "accepted":
         raise PermissionDeniedException(
             "Work can only be created for an accepted assignment"
         )
 
-    # Find the worker connected to the assignment.
     worker = (
         db.query(Worker)
-        .filter(
-            Worker.id == assignment.worker_id
-        )
+        .filter(Worker.id == assignment.worker_id)
         .first()
     )
 
     if not worker:
-        raise PermissionDeniedException(
-            "Assigned worker not found"
-        )
+        raise WorkerNotFoundException()
 
-    # Only the assigned worker can create Work.
     if worker.user_id != current_user_id:
         raise PermissionDeniedException(
             "You are not allowed to create work for this assignment"
         )
 
-    # Check for existing Work while holding the Assignment lock.
     existing_work = (
         db.query(Work)
-        .filter(
-            Work.assignment_id == assignment_id
-        )
+        .filter(Work.assignment_id == assignment_id)
         .first()
     )
 
@@ -87,7 +68,6 @@ def create_work(
             "Work already exists for this assignment"
         )
 
-    # Create Work.
     work = Work(
         assignment_id=assignment_id,
         status="pending",
@@ -101,33 +81,18 @@ def create_work(
     return work
 
 
-# ============================================================
-# Get Work
-# ============================================================
-
 def get_work(
     db: Session,
     work_id: int,
     current_user_id: int,
 ):
     """
-    Get a Work record.
-
-    Both parties can view it:
-
-        Customer → owns the Job
-        Worker   → owns the Worker profile
+    Get a Work record for the Job owner or assigned Worker.
     """
-
-    # --------------------------------------------------------
-    # 1. Find Work
-    # --------------------------------------------------------
 
     work = (
         db.query(Work)
-        .filter(
-            Work.id == work_id
-        )
+        .filter(Work.id == work_id)
         .first()
     )
 
@@ -136,66 +101,36 @@ def get_work(
             "Work not found"
         )
 
-    # --------------------------------------------------------
-    # 2. Find Assignment
-    # --------------------------------------------------------
-
     assignment = (
         db.query(Assignment)
-        .filter(
-            Assignment.id == work.assignment_id
-        )
+        .filter(Assignment.id == work.assignment_id)
         .first()
     )
 
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # --------------------------------------------------------
-    # 3. Find Job
-    # --------------------------------------------------------
-
     job = (
         db.query(Job)
-        .filter(
-            Job.id == assignment.job_id
-        )
+        .filter(Job.id == assignment.job_id)
         .first()
     )
-
-    # --------------------------------------------------------
-    # 4. Find Worker
-    # --------------------------------------------------------
 
     worker = (
         db.query(Worker)
-        .filter(
-            Worker.id == assignment.worker_id
-        )
+        .filter(Worker.id == assignment.worker_id)
         .first()
     )
-
-    # --------------------------------------------------------
-    # 5. Check Customer access
-    # --------------------------------------------------------
 
     is_customer = (
         job is not None
         and job.customer_id == current_user_id
     )
 
-    # --------------------------------------------------------
-    # 6. Check Worker access
-    # --------------------------------------------------------
-
     is_worker = (
         worker is not None
         and worker.user_id == current_user_id
     )
-
-    # --------------------------------------------------------
-    # 7. Reject unrelated users
-    # --------------------------------------------------------
 
     if not is_customer and not is_worker:
         raise PermissionDeniedException(
@@ -205,9 +140,120 @@ def get_work(
     return work
 
 
-# ============================================================
-# Update Work Description
-# ============================================================
+def get_work_for_assignment(
+    db: Session,
+    assignment_id: int,
+    current_user_id: int,
+):
+    """
+    Get the single Work record connected to an assignment.
+    """
+
+    assignment = (
+        db.query(Assignment)
+        .filter(Assignment.id == assignment_id)
+        .first()
+    )
+
+    if not assignment:
+        raise AssignmentNotFoundException()
+
+    job = (
+        db.query(Job)
+        .filter(Job.id == assignment.job_id)
+        .first()
+    )
+
+    worker = (
+        db.query(Worker)
+        .filter(Worker.id == assignment.worker_id)
+        .first()
+    )
+
+    is_customer = (
+        job is not None
+        and job.customer_id == current_user_id
+    )
+
+    is_worker = (
+        worker is not None
+        and worker.user_id == current_user_id
+    )
+
+    if not is_customer and not is_worker:
+        raise PermissionDeniedException(
+            "You are not allowed to view work for this assignment"
+        )
+
+    work = (
+        db.query(Work)
+        .filter(Work.assignment_id == assignment_id)
+        .first()
+    )
+
+    if not work:
+        raise PermissionDeniedException(
+            "Work not found for this assignment"
+        )
+
+    return work
+
+
+def get_my_works(
+    db: Session,
+    current_user_id: int,
+):
+    """
+    Return Work records belonging to the authenticated worker.
+    """
+
+    worker = (
+        db.query(Worker)
+        .filter(Worker.user_id == current_user_id)
+        .first()
+    )
+
+    if not worker:
+        raise WorkerNotFoundException()
+
+    rows = (
+        db.query(Work, Assignment, Job)
+        .join(
+            Assignment,
+            Work.assignment_id == Assignment.id,
+        )
+        .join(
+            Job,
+            Assignment.job_id == Job.id,
+        )
+        .filter(
+            Assignment.worker_id == worker.id,
+        )
+        .order_by(
+            Work.created_at.desc(),
+        )
+        .all()
+    )
+
+    return [
+        {
+            "id": work.id,
+            "assignment_id": work.assignment_id,
+            "status": work.status,
+            "description": work.description,
+            "started_at": work.started_at,
+            "completed_at": work.completed_at,
+            "created_at": work.created_at,
+            "updated_at": work.updated_at,
+            "job_title": job.title,
+            "job_description": job.description,
+            "location": job.location,
+            "budget": job.budget,
+            "job_status": job.status,
+        }
+        for work, assignment, job in rows
+    ]
+
 
 def update_work(
     db: Session,
@@ -221,15 +267,9 @@ def update_work(
     Only the assigned worker can update it.
     """
 
-    # --------------------------------------------------------
-    # 1. Find Work
-    # --------------------------------------------------------
-
     work = (
         db.query(Work)
-        .filter(
-            Work.id == work_id
-        )
+        .filter(Work.id == work_id)
         .first()
     )
 
@@ -238,59 +278,33 @@ def update_work(
             "Work not found"
         )
 
-    # --------------------------------------------------------
-    # 2. Find Assignment
-    # --------------------------------------------------------
-
     assignment = (
         db.query(Assignment)
-        .filter(
-            Assignment.id == work.assignment_id
-        )
+        .filter(Assignment.id == work.assignment_id)
         .first()
     )
 
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # --------------------------------------------------------
-    # 3. Find Worker
-    # --------------------------------------------------------
-
     worker = (
         db.query(Worker)
-        .filter(
-            Worker.id == assignment.worker_id
-        )
+        .filter(Worker.id == assignment.worker_id)
         .first()
     )
 
     if not worker:
-        raise PermissionDeniedException(
-            "Assigned worker not found"
-        )
-
-    # --------------------------------------------------------
-    # 4. Only assigned worker can update
-    # --------------------------------------------------------
+        raise WorkerNotFoundException()
 
     if worker.user_id != current_user_id:
         raise PermissionDeniedException(
             "You are not allowed to update this work"
         )
 
-    # --------------------------------------------------------
-    # 5. Work cannot be changed after completion
-    # --------------------------------------------------------
-
     if work.status == "completed":
         raise PermissionDeniedException(
             "Completed work cannot be modified"
         )
-
-    # --------------------------------------------------------
-    # 6. Update description
-    # --------------------------------------------------------
 
     work.description = description
 
@@ -299,10 +313,6 @@ def update_work(
 
     return work
 
-
-# ============================================================
-# Change Work Status
-# ============================================================
 
 def update_work_status(
     db: Session,
@@ -315,22 +325,12 @@ def update_work_status(
 
     Allowed flow:
 
-        pending
-           ↓
-      in_progress
-           ↓
-       completed
+        pending -> in_progress -> completed
     """
-
-    # --------------------------------------------------------
-    # 1. Find Work
-    # --------------------------------------------------------
 
     work = (
         db.query(Work)
-        .filter(
-            Work.id == work_id
-        )
+        .filter(Work.id == work_id)
         .first()
     )
 
@@ -339,50 +339,28 @@ def update_work_status(
             "Work not found"
         )
 
-    # --------------------------------------------------------
-    # 2. Find Assignment
-    # --------------------------------------------------------
-
     assignment = (
         db.query(Assignment)
-        .filter(
-            Assignment.id == work.assignment_id
-        )
+        .filter(Assignment.id == work.assignment_id)
         .first()
     )
 
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # --------------------------------------------------------
-    # 3. Find Worker
-    # --------------------------------------------------------
-
     worker = (
         db.query(Worker)
-        .filter(
-            Worker.id == assignment.worker_id
-        )
+        .filter(Worker.id == assignment.worker_id)
         .first()
     )
 
     if not worker:
-        raise PermissionDeniedException(
-            "Assigned worker not found"
-        )
-
-    # --------------------------------------------------------
-    # 4. Only assigned worker can change status
-    # --------------------------------------------------------
+        raise WorkerNotFoundException()
 
     if worker.user_id != current_user_id:
         raise PermissionDeniedException(
             "You are not allowed to change this work status"
         )
-
-    # --------------------------------------------------------
-    # 5. Validate the new status
-    # --------------------------------------------------------
 
     allowed_statuses = {
         "pending",
@@ -395,25 +373,13 @@ def update_work_status(
             f"Invalid work status: {new_status}"
         )
 
-    # --------------------------------------------------------
-    # 6. Define valid transitions
-    # --------------------------------------------------------
-
     valid_transitions = {
-        "pending": {
-            "in_progress",
-        },
-        "in_progress": {
-            "completed",
-        },
+        "pending": {"in_progress"},
+        "in_progress": {"completed"},
         "completed": set(),
     }
 
     current_status = work.status
-
-    # --------------------------------------------------------
-    # 7. Check whether transition is allowed
-    # --------------------------------------------------------
 
     if new_status not in valid_transitions[current_status]:
         raise PermissionDeniedException(
@@ -421,47 +387,25 @@ def update_work_status(
             f"{current_status} -> {new_status}"
         )
 
-    # --------------------------------------------------------
-    # 8. Update timestamps
-    # --------------------------------------------------------
-
     if new_status == "in_progress":
         work.started_at = datetime.now(timezone.utc)
 
     if new_status == "completed":
         work.completed_at = datetime.now(timezone.utc)
 
-    # --------------------------------------------------------
-    # 9. Update status
-    # --------------------------------------------------------
-
     work.status = new_status
-
-    # --------------------------------------------------------
-    # 10. Keep the Job lifecycle synchronized
-    # --------------------------------------------------------
 
     job = (
         db.query(Job)
-        .filter(
-            Job.id == assignment.job_id
-        )
+        .filter(Job.id == assignment.job_id)
         .first()
     )
 
     if job:
-
-        # Work started.
         if new_status == "in_progress":
             job.status = "in_progress"
-
-        # Work completed.
         elif new_status == "completed":
             job.status = "completed"
-
-    # --------------------------------------------------------
-    # 11. Save changes
-    # --------------------------------------------------------
 
     db.commit()
     db.refresh(work)

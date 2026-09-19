@@ -19,7 +19,11 @@
   gap: 30px;
   border: 1px solid var(--border-light);
   border-radius: 24px;
-  background: linear-gradient(135deg, #ffffff 0%, #f7fbff 100%);
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #f7fbff 100%
+  );
   box-shadow: var(--shadow-sm);
 }
 
@@ -252,7 +256,11 @@
 
 .worker-assignment-card-accepted {
   border-left: 3px solid var(--green);
-  background: linear-gradient(135deg, #fbfffc 0%, #f5fbf7 100%);
+  background: linear-gradient(
+    135deg,
+    #fbfffc 0%,
+    #f5fbf7 100%
+  );
 }
 
 .worker-assignment-card-main {
@@ -371,9 +379,14 @@
 }
 
 .worker-assignment-reject-button,
-.worker-assignment-accept-button {
+.worker-assignment-accept-button,
+.worker-assignment-start-button {
   min-height: 40px;
   padding: 0 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 700;
@@ -395,20 +408,23 @@
   background: #ffe7e5;
 }
 
-.worker-assignment-accept-button {
+.worker-assignment-accept-button,
+.worker-assignment-start-button {
   border: 1px solid var(--green);
   color: #fff;
   background: var(--green);
   box-shadow: 0 5px 16px rgba(31, 122, 77, 0.14);
 }
 
-.worker-assignment-accept-button:hover:not(:disabled) {
+.worker-assignment-accept-button:hover:not(:disabled),
+.worker-assignment-start-button:hover:not(:disabled) {
   transform: translateY(-1px);
   background: #18693f;
 }
 
 .worker-assignment-reject-button:disabled,
-.worker-assignment-accept-button:disabled {
+.worker-assignment-accept-button:disabled,
+.worker-assignment-start-button:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   transform: none;

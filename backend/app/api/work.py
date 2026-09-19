@@ -9,11 +9,14 @@ from backend.app.schemas.work import (
     WorkResponse,
     WorkStatusUpdate,
     WorkUpdate,
+    WorkerWorkResponse,
 )
 
 from backend.app.services.work_service import (
     create_work,
     get_work,
+    get_work_for_assignment,
+    get_my_works,
     update_work,
     update_work_status,
 )
@@ -24,10 +27,6 @@ router = APIRouter(
     tags=["Works"],
 )
 
-
-# ============================================================
-# Create Work
-# ============================================================
 
 @router.post(
     "/",
@@ -41,8 +40,6 @@ def create_new_work(
 ):
     """
     Create a Work record for an accepted assignment.
-
-    Only the assigned worker can create the Work.
     """
 
     return create_work(
@@ -53,9 +50,43 @@ def create_new_work(
     )
 
 
-# ============================================================
-# Get Work
-# ============================================================
+@router.get(
+    "/mine",
+    response_model=list[WorkerWorkResponse],
+)
+def get_my_work(
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """
+    Return Work records belonging to the authenticated worker.
+    """
+
+    return get_my_works(
+        db=db,
+        current_user_id=current_user_id,
+    )
+
+
+@router.get(
+    "/assignment/{assignment_id}",
+    response_model=WorkResponse,
+)
+def get_work_for_assignment_route(
+    assignment_id: int,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """
+    Get the Work connected to an assignment.
+    """
+
+    return get_work_for_assignment(
+        db=db,
+        assignment_id=assignment_id,
+        current_user_id=current_user_id,
+    )
+
 
 @router.get(
     "/{work_id}",
@@ -68,8 +99,6 @@ def get_single_work(
 ):
     """
     Get a Work record.
-
-    The customer and assigned worker can view it.
     """
 
     return get_work(
@@ -78,10 +107,6 @@ def get_single_work(
         current_user_id=current_user_id,
     )
 
-
-# ============================================================
-# Update Work Description
-# ============================================================
 
 @router.put(
     "/{work_id}",
@@ -95,8 +120,6 @@ def update_existing_work(
 ):
     """
     Update the description of Work.
-
-    Only the assigned worker can update it.
     """
 
     return update_work(
@@ -106,10 +129,6 @@ def update_existing_work(
         current_user_id=current_user_id,
     )
 
-
-# ============================================================
-# Update Work Status
-# ============================================================
 
 @router.patch(
     "/{work_id}/status",
@@ -126,11 +145,7 @@ def change_work_status(
 
     Allowed lifecycle:
 
-        pending
-            ↓
-        in_progress
-            ↓
-        completed
+        pending -> in_progress -> completed
     """
 
     return update_work_status(

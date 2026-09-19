@@ -103,6 +103,12 @@ export function getJob(jobId) {
   })
 }
 
+export function getAssignment(assignmentId) {
+  return request(`/assignments/${assignmentId}`, {
+    method: 'GET',
+  })
+}
+
 export function getMyJobInterests() {
   return request('/job-interests/mine', {
     method: 'GET',
@@ -165,4 +171,62 @@ export function rejectAssignment(assignmentId) {
       method: 'PATCH',
     },
   )
+}
+
+export function getMyWorks() {
+  return request('/works/mine', {
+    method: 'GET',
+  })
+}
+
+export function createWork(
+  assignmentId,
+  description = null,
+) {
+  return request('/works/', {
+    method: 'POST',
+    body: JSON.stringify({
+      assignment_id: assignmentId,
+      description,
+    }),
+  })
+}
+
+export function getWork(workId) {
+  return request(`/works/${workId}`, {
+    method: 'GET',
+  })
+}
+
+export function getWorkByAssignment(assignmentId) {
+  return request(
+    `/works/assignment/${assignmentId}`,
+    {
+      method: 'GET',
+    },
+  )
+}
+
+export function updateWork(
+  workId,
+  description,
+) {
+  return request(`/works/${workId}`, {
+    method: 'PUT',
+    body: JSON.stringify({
+      description,
+    }),
+  })
+}
+
+export function updateWorkStatus(
+  workId,
+  status,
+) {
+  return request(`/works/${workId}/status`, {
+    method: 'PATCH',
+    body: JSON.stringify({
+      status,
+    }),
+  })
 }
