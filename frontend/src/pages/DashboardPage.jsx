@@ -189,6 +189,7 @@ function DashboardPage() {
           <button
             type="button"
             className="dashboard-nav-item"
+            onClick={() => navigate('/jobs/available')}
           >
             <Search size={19} />
             <span>Browse Jobs</span>

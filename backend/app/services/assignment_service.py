@@ -12,6 +12,7 @@ from backend.app.core.exceptions import (
     InvalidAssignmentTransitionException,
     WorkerUnavailableException,
     PermissionDeniedException,
+    WorkerNotFoundException,
 )
 
 
@@ -30,7 +31,6 @@ def create_assignment(
     concurrent assignment requests cannot race on the same job.
     """
 
-    # Lock the Job row for this transaction.
     job = (
         db.query(Job)
         .filter(Job.id == job_id)
@@ -41,20 +41,17 @@ def create_assignment(
     if not job:
         raise AssignmentNotFoundException()
 
-    # Only the customer who owns the job can assign a worker.
     if job.customer_id != current_user_id:
         raise PermissionDeniedException(
             "You are not allowed to assign a worker to this job"
         )
 
-    # Job must still be open.
     if job.status != "open":
         raise InvalidAssignmentTransitionException(
             "Cannot create an assignment for a job "
             f"with status: {job.status}"
         )
 
-    # Lock the Worker row before checking availability.
     worker = (
         db.query(Worker)
         .filter(Worker.id == worker_id)
@@ -65,11 +62,9 @@ def create_assignment(
     if not worker:
         raise AssignmentNotFoundException()
 
-    # Worker must be available.
     if not worker.is_available:
         raise WorkerUnavailableException()
 
-    # Check for an existing assignment after acquiring the locks.
     existing_assignment = (
         db.query(Assignment)
         .filter(
@@ -82,7 +77,6 @@ def create_assignment(
     if existing_assignment:
         raise AssignmentAlreadyExistsException()
 
-    # Create the pending assignment.
     assignment = Assignment(
         job_id=job_id,
         worker_id=worker_id,
@@ -94,6 +88,60 @@ def create_assignment(
     db.refresh(assignment)
 
     return assignment
+
+
+def get_my_assignments(
+    db: Session,
+    current_user_id: int,
+):
+    """
+    Return assignments belonging to the authenticated worker.
+
+    The response includes the associated job summary so the worker
+    can review and act on an assignment without making a separate
+    job-list request for every assignment.
+    """
+
+    worker = (
+        db.query(Worker)
+        .filter(Worker.user_id == current_user_id)
+        .first()
+    )
+
+    if not worker:
+        raise WorkerNotFoundException()
+
+    rows = (
+        db.query(Assignment, Job)
+        .join(
+            Job,
+            Assignment.job_id == Job.id,
+        )
+        .filter(
+            Assignment.worker_id == worker.id,
+        )
+        .order_by(
+            Assignment.created_at.desc(),
+        )
+        .all()
+    )
+
+    return [
+        {
+            "id": assignment.id,
+            "job_id": assignment.job_id,
+            "worker_id": assignment.worker_id,
+            "status": assignment.status,
+            "job_title": job.title,
+            "job_description": job.description,
+            "location": job.location,
+            "budget": job.budget,
+            "job_status": job.status,
+            "created_at": assignment.created_at,
+            "updated_at": assignment.updated_at,
+        }
+        for assignment, job in rows
+    ]
 
 
 def get_assignment(
@@ -170,7 +218,6 @@ def accept_assignment(
     so concurrent acceptance requests cannot both succeed.
     """
 
-    # Find the assignment first so we know its related Job and Worker.
     assignment = (
         db.query(Assignment)
         .filter(Assignment.id == assignment_id)
@@ -180,10 +227,6 @@ def accept_assignment(
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # Lock the Job first.
-    #
-    # The Job is the shared resource that determines whether
-    # another assignment can also be accepted.
     job = (
         db.query(Job)
         .filter(Job.id == assignment.job_id)
@@ -194,7 +237,6 @@ def accept_assignment(
     if not job:
         raise AssignmentNotFoundException()
 
-    # Lock the Worker next.
     worker = (
         db.query(Worker)
         .filter(Worker.id == assignment.worker_id)
@@ -205,7 +247,6 @@ def accept_assignment(
     if not worker:
         raise AssignmentNotFoundException()
 
-    # Lock the Assignment as well.
     assignment = (
         db.query(Assignment)
         .filter(Assignment.id == assignment_id)
@@ -216,25 +257,24 @@ def accept_assignment(
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # Only the assigned worker can accept.
     if worker.user_id != current_user_id:
         raise PermissionDeniedException(
             "You are not allowed to accept this assignment"
         )
 
-    # Re-check the assignment state after acquiring the lock.
+    if not worker.is_available:
+        raise WorkerUnavailableException()
+
     if assignment.status != "pending":
         raise InvalidAssignmentTransitionException(
             "Only pending assignments can be accepted"
         )
 
-    # Re-check the Job state after acquiring the lock.
     if job.status != "open":
         raise InvalidAssignmentTransitionException(
             "The job is no longer open"
         )
 
-    # Perform all state changes inside the same transaction.
     assignment.status = "accepted"
     worker.is_available = False
     job.status = "assigned"
@@ -257,8 +297,6 @@ def reject_assignment(
         pending -> rejected
     """
 
-    # Lock the Assignment so two requests cannot update it
-    # at the same time.
     assignment = (
         db.query(Assignment)
         .filter(Assignment.id == assignment_id)
@@ -278,13 +316,11 @@ def reject_assignment(
     if not worker:
         raise AssignmentNotFoundException()
 
-    # Only the assigned worker can reject.
     if worker.user_id != current_user_id:
         raise PermissionDeniedException(
             "You are not allowed to reject this assignment"
         )
 
-    # Re-check the state while holding the lock.
     if assignment.status != "pending":
         raise InvalidAssignmentTransitionException(
             "Only pending assignments can be rejected"
@@ -313,7 +349,6 @@ def cancel_assignment(
     a concurrent accept/cancel race.
     """
 
-    # Find the assignment first so we know its Job.
     assignment = (
         db.query(Assignment)
         .filter(Assignment.id == assignment_id)
@@ -323,7 +358,6 @@ def cancel_assignment(
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # Lock the Job first.
     job = (
         db.query(Job)
         .filter(Job.id == assignment.job_id)
@@ -334,7 +368,6 @@ def cancel_assignment(
     if not job:
         raise AssignmentNotFoundException()
 
-    # Lock the Assignment after the Job.
     assignment = (
         db.query(Assignment)
         .filter(Assignment.id == assignment_id)
@@ -345,13 +378,11 @@ def cancel_assignment(
     if not assignment:
         raise AssignmentNotFoundException()
 
-    # Only the job owner can cancel.
     if job.customer_id != current_user_id:
         raise PermissionDeniedException(
             "You are not allowed to cancel this assignment"
         )
 
-    # Re-check the state while holding the lock.
     if assignment.status != "pending":
         raise InvalidAssignmentTransitionException(
             "Only pending assignments can be cancelled"

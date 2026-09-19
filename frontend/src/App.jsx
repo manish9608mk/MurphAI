@@ -12,6 +12,10 @@ import LoginPage from './pages/LoginPage'
 import RegisterPage from './pages/RegisterPage'
 import DashboardPage from './pages/DashboardPage'
 import CreateJobPage from './pages/CreateJobPage'
+import AvailableJobsPage from './pages/AvailableJobsPage'
+import JobDetailsPage from './pages/JobDetailsPage'
+import JobInterestsPage from './pages/JobInterestsPage'
+import WorkerAssignmentsPage from './pages/WorkerAssignmentsPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -46,6 +50,26 @@ function App() {
           <Route
             path="/jobs/new"
             element={<CreateJobPage />}
+          />
+
+          <Route
+            path="/jobs/available"
+            element={<AvailableJobsPage />}
+          />
+
+          <Route
+            path="/jobs/:jobId"
+            element={<JobDetailsPage />}
+          />
+
+          <Route
+            path="/jobs/:jobId/interests"
+            element={<JobInterestsPage />}
+          />
+
+          <Route
+            path="/assignments"
+            element={<WorkerAssignmentsPage />}
           />
         </Route>
 

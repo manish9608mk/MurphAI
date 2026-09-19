@@ -17,9 +17,12 @@ async function request(path, options = {}) {
     headers,
   })
 
-  const contentType = response.headers.get('content-type') || ''
+  const contentType =
+    response.headers.get('content-type') || ''
 
-  const data = contentType.includes('application/json')
+  const data = contentType.includes(
+    'application/json',
+  )
     ? await response.json()
     : await response.text()
 
@@ -71,6 +74,12 @@ export function getMyJobs() {
   })
 }
 
+export function getAvailableJobs() {
+  return request('/jobs/available', {
+    method: 'GET',
+  })
+}
+
 export function createJob(jobData) {
   return request('/jobs/', {
     method: 'POST',
@@ -83,5 +92,77 @@ export function logoutUser() {
 }
 
 export function isAuthenticated() {
-  return Boolean(localStorage.getItem('access_token'))
+  return Boolean(
+    localStorage.getItem('access_token'),
+  )
+}
+
+export function getJob(jobId) {
+  return request(`/jobs/${jobId}`, {
+    method: 'GET',
+  })
+}
+
+export function getMyJobInterests() {
+  return request('/job-interests/mine', {
+    method: 'GET',
+  })
+}
+
+export function createJobInterest(jobId) {
+  return request('/job-interests/', {
+    method: 'POST',
+    body: JSON.stringify({
+      job_id: jobId,
+    }),
+  })
+}
+
+export function withdrawJobInterest(interestId) {
+  return request(
+    `/job-interests/${interestId}/withdraw`,
+    {
+      method: 'PATCH',
+    },
+  )
+}
+
+export function getJobInterests(jobId) {
+  return request(`/jobs/${jobId}/interests`, {
+    method: 'GET',
+  })
+}
+
+export function createAssignment(jobId, workerId) {
+  return request('/assignments/', {
+    method: 'POST',
+    body: JSON.stringify({
+      job_id: jobId,
+      worker_id: workerId,
+    }),
+  })
+}
+
+export function getMyAssignments() {
+  return request('/assignments/mine', {
+    method: 'GET',
+  })
+}
+
+export function acceptAssignment(assignmentId) {
+  return request(
+    `/assignments/${assignmentId}/accept`,
+    {
+      method: 'PATCH',
+    },
+  )
+}
+
+export function rejectAssignment(assignmentId) {
+  return request(
+    `/assignments/${assignmentId}/reject`,
+    {
+      method: 'PATCH',
+    },
+  )
 }

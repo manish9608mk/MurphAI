@@ -7,11 +7,13 @@ from backend.app.core.security import get_current_user_id
 from backend.app.schemas.assignment import (
     AssignmentCreate,
     AssignmentResponse,
+    WorkerAssignmentResponse,
 )
 
 from backend.app.services.assignment_service import (
     create_assignment,
     get_assignment,
+    get_my_assignments,
     accept_assignment,
     reject_assignment,
     cancel_assignment,
@@ -42,6 +44,24 @@ def create_new_assignment(
         db,
         assignment_data.job_id,
         assignment_data.worker_id,
+        current_user_id,
+    )
+
+
+@router.get(
+    "/mine",
+    response_model=list[WorkerAssignmentResponse],
+)
+def get_my_assignments_for_worker(
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """
+    Return assignments belonging to the authenticated worker.
+    """
+
+    return get_my_assignments(
+        db,
         current_user_id,
     )
 
