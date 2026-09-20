@@ -51,25 +51,39 @@ function WorkerProfilePage() {
   useEffect(() => {
     let cancelled = false
 
-    Promise.all([
-      getCurrentUser(),
-      getMyWorker(),
-    ])
-      .then(([userData, workerData]) =>
-        getWorkerSkills(workerData.id).then(
-          (skillsData) => ({
-            userData,
-            workerData,
-            skillsData,
-          }),
-        ),
-      )
-      .then(({ userData, workerData, skillsData }) => {
+    async function loadProfile() {
+      try {
+        const userData = await getCurrentUser()
+
+        let workerData = null
+
+        try {
+          workerData = await getMyWorker()
+        } catch {
+          workerData = null
+        }
+
         if (cancelled) {
           return
         }
 
         setUser(userData)
+
+        if (!workerData) {
+          setWorker(null)
+          setSkills([])
+          setForm(INITIAL_FORM)
+          return
+        }
+
+        const skillsData = await getWorkerSkills(
+          workerData.id,
+        )
+
+        if (cancelled) {
+          return
+        }
+
         setWorker(workerData)
         setForm({
           bio: workerData.bio || '',
@@ -79,10 +93,11 @@ function WorkerProfilePage() {
           is_available: workerData.is_available,
         })
         setSkills(
-          Array.isArray(skillsData) ? skillsData : [],
+          Array.isArray(skillsData)
+            ? skillsData
+            : [],
         )
-      })
-      .catch((err) => {
+      } catch (err) {
         if (cancelled) {
           return
         }
@@ -92,12 +107,14 @@ function WorkerProfilePage() {
             ? err.message
             : 'Unable to load your worker profile.',
         )
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) {
           setLoading(false)
         }
-      })
+      }
+    }
+
+    loadProfile()
 
     return () => {
       cancelled = true

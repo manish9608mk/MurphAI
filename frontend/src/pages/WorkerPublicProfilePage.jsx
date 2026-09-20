@@ -13,7 +13,9 @@ import {
 } from 'lucide-react'
 import { useNavigate, useParams } from 'react-router-dom'
 import {
+  createAssignment,
   getCurrentUser,
+  getMyJobs,
   getWorkerPublicProfile,
 } from '../services/api'
 import './WorkerPublicProfilePage.css'
@@ -69,6 +71,82 @@ function WorkerPublicProfilePage() {
   const [profile, setProfile] = useState(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+
+  const [hireOpen, setHireOpen] = useState(false)
+  const [hireJobs, setHireJobs] = useState([])
+  const [hireLoading, setHireLoading] = useState(false)
+  const [hireSaving, setHireSaving] = useState(false)
+  const [hireError, setHireError] = useState('')
+  const [hireSuccess, setHireSuccess] = useState('')
+
+  async function openHirePanel() {
+    setHireOpen(true)
+    setHireLoading(true)
+    setHireError('')
+    setHireSuccess('')
+
+    try {
+      const jobsData = await getMyJobs()
+
+      const openJobs = (
+        Array.isArray(jobsData)
+          ? jobsData
+          : []
+      ).filter(
+        (job) => job.status === 'open',
+      )
+
+      setHireJobs(openJobs)
+    } catch (err) {
+      setHireError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to load your open jobs.',
+      )
+    } finally {
+      setHireLoading(false)
+    }
+  }
+
+  function closeHirePanel() {
+    if (hireSaving) {
+      return
+    }
+
+    setHireOpen(false)
+    setHireError('')
+  }
+
+  async function handleHire(jobId) {
+    setHireSaving(true)
+    setHireError('')
+    setHireSuccess('')
+
+    try {
+      await createAssignment(
+        jobId,
+        profile.worker_id,
+      )
+
+      setHireSuccess(
+        'Assignment request created successfully. The worker can now review and respond to it.',
+      )
+
+      setHireJobs((currentJobs) =>
+        currentJobs.filter(
+          (job) => job.id !== jobId,
+        ),
+      )
+    } catch (err) {
+      setHireError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to create the assignment.',
+      )
+    } finally {
+      setHireSaving(false)
+    }
+  }
 
   async function loadProfile() {
     setLoading(true)
@@ -303,9 +381,173 @@ function WorkerPublicProfilePage() {
                     )}
                   </span>
                 </div>
+
+                <div className="worker-public-profile-hero-actions">
+                  <button
+                    type="button"
+                    className="dashboard-primary-button"
+                    onClick={openHirePanel}
+                  >
+                    <BriefcaseBusiness size={17} />
+                    Hire this worker
+                  </button>
+                </div>
               </div>
             </div>
           </section>
+
+          {hireOpen && (
+            <div
+              className="worker-public-profile-hire-overlay"
+              role="presentation"
+              onMouseDown={(event) => {
+                if (
+                  event.target === event.currentTarget
+                ) {
+                  closeHirePanel()
+                }
+              }}
+            >
+              <section
+                className="worker-public-profile-hire-dialog"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="hire-worker-title"
+              >
+                <div className="worker-public-profile-hire-dialog-header">
+                  <div>
+                    <span className="dashboard-panel-kicker">
+                      HIRE WORKER
+                    </span>
+
+                    <h2 id="hire-worker-title">
+                      Choose a job for {profile.name}
+                    </h2>
+
+                    <p>
+                      Select one of your open jobs to send this
+                      worker an assignment request.
+                    </p>
+                  </div>
+
+                  <button
+                    type="button"
+                    className="worker-public-profile-hire-close"
+                    onClick={closeHirePanel}
+                    disabled={hireSaving}
+                    aria-label="Close hire dialog"
+                  >
+                    ×
+                  </button>
+                </div>
+
+                {hireError && (
+                  <div className="worker-public-profile-hire-alert worker-public-profile-hire-alert-error">
+                    <ShieldCheck size={16} />
+                    <span>{hireError}</span>
+                  </div>
+                )}
+
+                {hireSuccess && (
+                  <div className="worker-public-profile-hire-alert worker-public-profile-hire-alert-success">
+                    <CheckCircle2 size={16} />
+                    <span>{hireSuccess}</span>
+                  </div>
+                )}
+
+                {hireLoading ? (
+                  <div className="worker-public-profile-hire-state">
+                    <div className="dashboard-loading-spinner" />
+                    <strong>Loading your open jobs...</strong>
+                    <span>
+                      Finding jobs that can accept a new worker.
+                    </span>
+                  </div>
+                ) : hireJobs.length === 0 ? (
+                  <div className="worker-public-profile-hire-state">
+                    <BriefcaseBusiness size={25} />
+
+                    <strong>
+                      No open jobs available
+                    </strong>
+
+                    <span>
+                      Create an open job first, then return here
+                      to send {profile.name} an assignment request.
+                    </span>
+
+                    <button
+                      type="button"
+                      className="dashboard-primary-button"
+                      onClick={() =>
+                        navigate('/jobs/new')
+                      }
+                    >
+                      <BriefcaseBusiness size={16} />
+                      Create a job
+                    </button>
+                  </div>
+                ) : (
+                  <div className="worker-public-profile-hire-jobs">
+                    {hireJobs.map((job) => (
+                      <article
+                        className="worker-public-profile-hire-job"
+                        key={job.id}
+                      >
+                        <div className="worker-public-profile-hire-job-icon">
+                          <BriefcaseBusiness size={18} />
+                        </div>
+
+                        <div className="worker-public-profile-hire-job-copy">
+                          <span>JOB #{job.id}</span>
+                          <h3>{job.title}</h3>
+
+                          <div>
+                            <span>
+                              <MapPin size={13} />
+                              {job.location || 'Remote'}
+                            </span>
+
+                            <span>
+                              ₹
+                              {Number(
+                                job.budget || 0,
+                              ).toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="worker-public-profile-hire-job-button"
+                          onClick={() =>
+                            handleHire(job.id)
+                          }
+                          disabled={hireSaving}
+                        >
+                          {hireSaving
+                            ? 'Sending...'
+                            : 'Send request'}
+                          <ArrowLeft
+                            size={15}
+                            className="worker-public-profile-hire-job-arrow"
+                          />
+                        </button>
+                      </article>
+                    ))}
+                  </div>
+                )}
+
+                <div className="worker-public-profile-hire-footer">
+                  <ShieldCheck size={15} />
+                  <span>
+                    The worker must accept the assignment before
+                    the job moves forward.
+                  </span>
+                </div>
+              </section>
+            </div>
+          )}
 
           <section className="worker-public-profile-summary-grid">
             <article className="worker-public-profile-summary-card">
