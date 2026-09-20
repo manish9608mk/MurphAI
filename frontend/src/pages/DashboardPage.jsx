@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import {
   ArrowRight,
+  BadgeCheck,
   Bell,
   BriefcaseBusiness,
   CheckCircle2,
@@ -20,7 +21,9 @@ import {
 import { useNavigate } from 'react-router-dom'
 import {
   getCurrentUser,
+  getMyAssignments,
   getMyJobs,
+  getMyWorker,
   logoutUser,
 } from '../services/api'
 
@@ -29,32 +32,88 @@ function DashboardPage() {
 
   const [user, setUser] = useState(null)
   const [jobs, setJobs] = useState([])
+  const [workerProfile, setWorkerProfile] = useState(null)
+  const [assignments, setAssignments] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
+    let cancelled = false
+
     async function loadDashboard() {
       try {
-        const [userData, jobsData] = await Promise.all([
-          getCurrentUser(),
-          getMyJobs(),
-        ])
+        const [userData, jobsData] =
+          await Promise.all([
+            getCurrentUser(),
+            getMyJobs(),
+          ])
+
+        if (cancelled) {
+          return
+        }
 
         setUser(userData)
-        setJobs(Array.isArray(jobsData) ? jobsData : [])
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Unable to load your dashboard',
+        setJobs(
+          Array.isArray(jobsData)
+            ? jobsData
+            : [],
         )
+
+        let workerData = null
+
+        try {
+          workerData = await getMyWorker()
+        } catch {
+          workerData = null
+        }
+
+        if (cancelled) {
+          return
+        }
+
+        setWorkerProfile(workerData)
+
+        if (workerData) {
+          try {
+            const assignmentData =
+              await getMyAssignments()
+
+            if (!cancelled) {
+              setAssignments(
+                Array.isArray(assignmentData)
+                  ? assignmentData
+                  : [],
+              )
+            }
+          } catch {
+            if (!cancelled) {
+              setAssignments([])
+            }
+          }
+        } else {
+          setAssignments([])
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : 'Unable to load your dashboard',
+          )
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
     loadDashboard()
+
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   function handleLogout() {
@@ -186,6 +245,10 @@ function DashboardPage() {
             <span>Dashboard</span>
           </button>
 
+          <span className="dashboard-nav-section-label">
+            CUSTOMER
+          </span>
+
           <button
             type="button"
             className="dashboard-nav-item"
@@ -221,9 +284,77 @@ function DashboardPage() {
             )}
           </button>
 
+          <span className="dashboard-nav-section-label">
+            WORKER
+          </span>
+
+          {workerProfile ? (
+            <>
+              <button
+                type="button"
+                className="dashboard-nav-item"
+                onClick={() =>
+                  navigate('/assignments')
+                }
+              >
+                <BriefcaseBusiness size={19} />
+                <span>My Assignments</span>
+
+                {assignments.filter(
+                  (item) =>
+                    item.status === 'pending',
+                ).length > 0 && (
+                  <span className="dashboard-nav-count">
+                    {
+                      assignments.filter(
+                        (item) =>
+                          item.status ===
+                          'pending',
+                      ).length
+                    }
+                  </span>
+                )}
+              </button>
+
+              <button
+                type="button"
+                className="dashboard-nav-item"
+                onClick={() =>
+                  navigate('/workers/history')
+                }
+              >
+                <ShieldCheck size={19} />
+                <span>Verified History</span>
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              className="dashboard-nav-item dashboard-nav-item-cta"
+              onClick={() =>
+                navigate('/workers/profile')
+              }
+            >
+              <BadgeCheck size={19} />
+              <span>Become a Worker</span>
+
+              <ArrowRight
+                size={15}
+                className="dashboard-nav-item-arrow"
+              />
+            </button>
+          )}
+
+          <span className="dashboard-nav-section-label">
+            ACCOUNT
+          </span>
+
           <button
             type="button"
             className="dashboard-nav-item"
+            onClick={() =>
+              console.log('Notifications coming soon')
+            }
           >
             <Bell size={19} />
             <span>Notifications</span>
@@ -235,7 +366,11 @@ function DashboardPage() {
             onClick={() => navigate('/workers/profile')}
           >
             <UserRound size={19} />
-            <span>Profile</span>
+            <span>
+              {workerProfile
+                ? 'Profile'
+                : 'Account profile'}
+            </span>
           </button>
 
           <button
@@ -320,7 +455,11 @@ function DashboardPage() {
                   Hello, {user.name?.split(' ')[0]}
                 </strong>
 
-                <span>Customer</span>
+                <span>
+                  {workerProfile
+                    ? 'Customer + Worker'
+                    : 'Customer'}
+                </span>
               </div>
 
               <ChevronDown size={17} />
@@ -336,15 +475,27 @@ function DashboardPage() {
               </span>
 
               <h1>
-                Get work done.
-                <br />
-                Build trust that lasts.
+                {workerProfile ? (
+                  <>
+                    Post work.
+                    <br />
+                    Take work.
+                    <br />
+                    Build trust that lasts.
+                  </>
+                ) : (
+                  <>
+                    Get work done.
+                    <br />
+                    Build trust that lasts.
+                  </>
+                )}
               </h1>
 
               <p>
-                Post work, find skilled people, and
-                build a verified professional history
-                with MurphAI.
+                {workerProfile
+                  ? 'Create jobs, discover workers, accept assignments, and build a verified professional history.'
+                  : 'Post work, find skilled people, and build a verified professional history with MurphAI.'}
               </p>
 
               <div className="dashboard-hero-actions">
@@ -448,6 +599,125 @@ function DashboardPage() {
               </div>
             </article>
           </section>
+
+          {workerProfile && (
+            <section className="dashboard-worker-stat-section">
+              <div className="dashboard-panel-header">
+                <div>
+                  <span className="dashboard-panel-kicker">
+                    WORKER WORKSPACE
+                  </span>
+
+                  <h2>Your assignments</h2>
+                </div>
+
+                <button
+                  type="button"
+                  className="dashboard-link-button"
+                  onClick={() =>
+                    navigate('/assignments')
+                  }
+                >
+                  Open assignments
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+
+              <section className="dashboard-stat-grid">
+                <article className="dashboard-stat-card">
+                  <div className="dashboard-stat-icon">
+                    <BriefcaseBusiness size={21} />
+                  </div>
+
+                  <div>
+                    <span>Needs Response</span>
+                    <strong>
+                      {
+                        assignments.filter(
+                          (item) =>
+                            item.status ===
+                            'pending',
+                        ).length
+                      }
+                    </strong>
+
+                    <small>
+                      Customer selections awaiting you
+                    </small>
+                  </div>
+                </article>
+
+                <article className="dashboard-stat-card">
+                  <div className="dashboard-stat-icon dashboard-stat-icon-active">
+                    <CheckCircle2 size={21} />
+                  </div>
+
+                  <div>
+                    <span>Accepted</span>
+                    <strong>
+                      {
+                        assignments.filter(
+                          (item) =>
+                            item.status ===
+                            'accepted',
+                        ).length
+                      }
+                    </strong>
+
+                    <small>
+                      Work you have agreed to do
+                    </small>
+                  </div>
+                </article>
+
+                <article className="dashboard-stat-card">
+                  <div className="dashboard-stat-icon dashboard-stat-icon-progress">
+                    <Clock3 size={21} />
+                  </div>
+
+                  <div>
+                    <span>In Delivery</span>
+                    <strong>
+                      {
+                        assignments.filter(
+                          (item) =>
+                            item.job_status ===
+                            'in_progress',
+                        ).length
+                      }
+                    </strong>
+
+                    <small>
+                      Work currently underway
+                    </small>
+                  </div>
+                </article>
+
+                <article className="dashboard-stat-card">
+                  <div className="dashboard-stat-icon dashboard-stat-icon-complete">
+                    <ShieldCheck size={21} />
+                  </div>
+
+                  <div>
+                    <span>Completed Jobs</span>
+                    <strong>
+                      {
+                        assignments.filter(
+                          (item) =>
+                            item.job_status ===
+                            'completed',
+                        ).length
+                      }
+                    </strong>
+
+                    <small>
+                      Completed assignments
+                    </small>
+                  </div>
+                </article>
+              </section>
+            </section>
+          )}
 
           <section className="dashboard-lower-grid">
             <article className="dashboard-panel dashboard-jobs-panel">

@@ -4487,3 +4487,170 @@ button:not(:disabled):active {
     width: 100%;
   }
 }
+/* ---------- Premium dashboard navigation sections ---------- */
+
+.dashboard-nav-section-label {
+  margin: 17px 9px 7px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-faint);
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.dashboard-nav-section-label::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: 50%;
+  background: var(--blue);
+  box-shadow: 0 0 0 4px var(--blue-soft);
+}
+
+.dashboard-nav-section-label::after {
+  content: "";
+  height: 1px;
+  flex: 1;
+  margin-left: 2px;
+  background:
+    linear-gradient(
+      to right,
+      var(--border-light),
+      transparent
+    );
+}
+
+.dashboard-nav {
+  gap: 3px;
+}
+
+.dashboard-nav-item {
+  min-height: 45px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-radius: 12px;
+  transition:
+    color 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease,
+    transform 160ms ease;
+}
+
+.dashboard-nav-item:hover {
+  border-color: var(--border-light);
+  background: rgba(242, 242, 245, 0.72);
+  transform: translateX(1px);
+}
+
+.dashboard-nav-item-active {
+  border-color: var(--border-light);
+  background:
+    linear-gradient(
+      135deg,
+      #f0f1f4 0%,
+      #e8e8ed 100%
+    );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.72),
+    0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.dashboard-nav-item svg {
+  color: var(--text-muted);
+  transition: color 160ms ease;
+}
+
+.dashboard-nav-item:hover svg,
+.dashboard-nav-item-active svg {
+  color: var(--text);
+}
+
+.dashboard-nav-count {
+  min-width: 23px;
+  height: 23px;
+  border: 1px solid rgba(0, 113, 227, 0.08);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+/* Premium account separation */
+
+.dashboard-nav-section-label:last-of-type {
+  margin-top: 21px;
+}
+
+.dashboard-nav-item:last-child {
+  margin-top: 1px;
+}
+
+/* Slightly more polished sidebar surface */
+
+.dashboard-sidebar {
+  padding-top: 22px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.94) 0%,
+      rgba(250, 250, 252, 0.92) 100%
+    );
+  box-shadow:
+    8px 0 30px rgba(0, 0, 0, 0.025);
+}
+
+/* ---------- Become a Worker CTA ---------- */
+
+.dashboard-nav-item-cta {
+  position: relative;
+  overflow: hidden;
+  border-color: rgba(0, 113, 227, 0.14);
+  color: var(--blue);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(0, 113, 227, 0.07) 0%,
+      rgba(0, 113, 227, 0.025) 100%
+    );
+}
+
+.dashboard-nav-item-cta::before {
+  content: "";
+  width: 3px;
+  height: 20px;
+  position: absolute;
+  left: 0;
+  top: 50%;
+  border-radius: 0 999px 999px 0;
+  background: var(--blue);
+  transform: translateY(-50%);
+}
+
+.dashboard-nav-item-cta:hover {
+  border-color: rgba(0, 113, 227, 0.22);
+  color: var(--blue);
+  background:
+    linear-gradient(
+      135deg,
+      rgba(0, 113, 227, 0.11) 0%,
+      rgba(0, 113, 227, 0.04) 100%
+    );
+}
+
+.dashboard-nav-item-cta svg {
+  color: var(--blue);
+}
+
+.dashboard-nav-item-arrow {
+  margin-left: auto;
+  transition: transform 160ms ease;
+}
+
+.dashboard-nav-item-cta:hover
+  .dashboard-nav-item-arrow {
+  transform: translateX(2px);
+}
