@@ -198,6 +198,15 @@ function DashboardPage() {
           <button
             type="button"
             className="dashboard-nav-item"
+            onClick={() => navigate('/workers/discover')}
+          >
+            <UserRound size={19} />
+            <span>Browse Workers</span>
+          </button>
+
+          <button
+            type="button"
+            className="dashboard-nav-item"
           >
             <FolderKanban size={19} />
             <span>My Jobs</span>
@@ -350,6 +359,9 @@ function DashboardPage() {
                 <button
                   type="button"
                   className="dashboard-secondary-button"
+                  onClick={() =>
+                    navigate('/workers/discover')
+                  }
                 >
                   Browse Workers
                   <ArrowRight size={17} />
@@ -640,6 +652,9 @@ function DashboardPage() {
               <button
                 type="button"
                 className="dashboard-quick-card"
+                onClick={() =>
+                  navigate('/workers/discover')
+                }
               >
                 <div className="dashboard-quick-icon">
                   <Search size={21} />

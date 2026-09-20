@@ -338,6 +338,45 @@ export function createReputation(
   })
 }
 
+export function discoverWorkers({
+  search = '',
+  location = '',
+  skill = '',
+  available_only = false,
+  limit = 50,
+  offset = 0,
+} = {}) {
+  const params = new URLSearchParams()
+
+  if (search.trim()) {
+    params.set('search', search.trim())
+  }
+
+  if (location.trim()) {
+    params.set('location', location.trim())
+  }
+
+  if (skill.trim()) {
+    params.set('skill', skill.trim())
+  }
+
+  if (available_only) {
+    params.set('available_only', 'true')
+  }
+
+  params.set('limit', String(limit))
+  params.set('offset', String(offset))
+
+  const query = params.toString()
+
+  return request(
+    `/workers/discover${query ? `?${query}` : ''}`,
+    {
+      method: 'GET',
+    },
+  )
+}
+
 export function getWorkerPublicProfile(workerId) {
   return request(`/workers/${workerId}/profile`, {
     method: 'GET',
