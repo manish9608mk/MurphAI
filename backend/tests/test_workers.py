@@ -109,6 +109,118 @@ def test_user_cannot_create_two_worker_profiles(client, db):
     )
 
 
+def test_get_my_worker_requires_authentication(client):
+    response = client.get("/workers/me")
+
+    assert response.status_code == 401
+
+
+def test_get_my_worker_returns_authenticated_users_profile(
+    client,
+    db,
+):
+    user_id = create_test_user(
+        db,
+        "My Worker",
+        "my-worker@example.com",
+    )
+
+    create_response = client.post(
+        "/workers/",
+        headers=auth_headers(user_id),
+        json={
+            "bio": "My worker profile",
+            "location": "Bhopal",
+            "experience_years": 5,
+            "is_available": True,
+        },
+    )
+
+    worker_id = create_response.json()["id"]
+
+    response = client.get(
+        "/workers/me",
+        headers=auth_headers(user_id),
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["id"] == worker_id
+    assert data["user_id"] == user_id
+    assert data["bio"] == "My worker profile"
+    assert data["location"] == "Bhopal"
+    assert data["experience_years"] == 5
+    assert data["is_available"] is True
+
+
+def test_get_my_worker_does_not_return_another_users_worker(
+    client,
+    db,
+):
+    first_user_id = create_test_user(
+        db,
+        "Worker Owner",
+        "worker-owner@example.com",
+    )
+
+    second_user_id = create_test_user(
+        db,
+        "Worker Viewer",
+        "worker-viewer@example.com",
+    )
+
+    create_response = client.post(
+        "/workers/",
+        headers=auth_headers(first_user_id),
+        json={
+            "bio": "Private worker profile",
+            "location": "Bhopal",
+            "experience_years": 8,
+            "is_available": False,
+        },
+    )
+
+    worker_id = create_response.json()["id"]
+
+    response = client.get(
+        "/workers/me",
+        headers=auth_headers(second_user_id),
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Worker not found"
+
+    # Confirm the owner's worker still exists independently.
+    owner_response = client.get(
+        "/workers/me",
+        headers=auth_headers(first_user_id),
+    )
+
+    assert owner_response.status_code == 200
+    assert owner_response.json()["id"] == worker_id
+
+
+def test_get_my_worker_returns_404_when_profile_does_not_exist(
+    client,
+    db,
+):
+    user_id = create_test_user(
+        db,
+        "User Without Worker",
+        "no-worker-profile@example.com",
+    )
+
+    response = client.get(
+        "/workers/me",
+        headers=auth_headers(user_id),
+    )
+
+    assert response.status_code == 404
+    assert response.json()["detail"] == "Worker not found"
+
+
 def test_get_workers(client, db):
     user_id = create_test_user(
         db,

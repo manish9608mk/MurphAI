@@ -18,6 +18,7 @@ from backend.app.schemas.worker_profile import (
 from backend.app.services.worker_service import (
     create_worker,
     get_workers,
+    get_my_worker,
     get_worker,
     update_worker,
     delete_worker,
@@ -71,6 +72,20 @@ def get_all_workers(
     current_user_id: int = Depends(get_current_user_id),
 ):
     return get_workers(db)
+
+
+@router.get(
+    "/me",
+    response_model=WorkerResponse,
+)
+def get_my_worker_profile(
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    return get_my_worker(
+        db=db,
+        user_id=current_user_id,
+    )
 
 
 @router.get(

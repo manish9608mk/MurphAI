@@ -45,6 +45,22 @@ def get_workers(db: Session):
     return db.query(Worker).all()
 
 
+def get_my_worker(
+    db: Session,
+    user_id: int,
+):
+    worker = (
+        db.query(Worker)
+        .filter(Worker.user_id == user_id)
+        .first()
+    )
+
+    if not worker:
+        raise WorkerNotFoundException()
+
+    return worker
+
+
 def get_worker(
     db: Session,
     worker_id: int,
