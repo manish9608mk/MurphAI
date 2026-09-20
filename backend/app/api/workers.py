@@ -15,6 +15,10 @@ from backend.app.schemas.worker_profile import (
     WorkerPublicProfileResponse,
 )
 
+from backend.app.schemas.worker_discovery import (
+    WorkerDiscoveryResponse,
+)
+
 from backend.app.services.worker_service import (
     create_worker,
     get_workers,
@@ -30,6 +34,10 @@ from backend.app.services.worker_history_service import (
 
 from backend.app.services.worker_profile_service import (
     get_worker_public_profile,
+)
+
+from backend.app.services.worker_discovery_service import (
+    discover_workers,
 )
 
 from backend.app.core.dependencies import (
@@ -72,6 +80,37 @@ def get_all_workers(
     current_user_id: int = Depends(get_current_user_id),
 ):
     return get_workers(db)
+
+
+@router.get(
+    "/discover",
+    response_model=WorkerDiscoveryResponse,
+)
+def discover_worker_directory(
+    search: str | None = None,
+    location: str | None = None,
+    skill: str | None = None,
+    available_only: bool = False,
+    limit: int = 50,
+    offset: int = 0,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    if limit < 1 or limit > 100:
+        limit = 50
+
+    if offset < 0:
+        offset = 0
+
+    return discover_workers(
+        db=db,
+        search=search,
+        location=location,
+        skill=skill,
+        available_only=available_only,
+        limit=limit,
+        offset=offset,
+    )
 
 
 @router.get(
