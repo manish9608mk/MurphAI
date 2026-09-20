@@ -604,3 +604,197 @@ def test_confirmation_is_saved_in_database(
     assert confirmation is not None
     assert confirmation.work_id == work_id
     assert confirmation.comment == "Database test"
+
+def test_customer_can_get_confirmation_for_work(client):
+    register_user(
+        client,
+        "Customer",
+        "customer@example.com",
+    )
+
+    register_user(
+        client,
+        "Worker",
+        "worker@example.com",
+    )
+
+    customer_token = login_user(
+        client,
+        "customer@example.com",
+    )
+
+    worker_token = login_user(
+        client,
+        "worker@example.com",
+    )
+
+    work_id = create_completed_work(
+        client,
+        customer_token,
+        worker_token,
+    )
+
+    create_response = client.post(
+        "/confirmations/",
+        headers=auth_headers(customer_token),
+        json={
+            "work_id": work_id,
+            "comment": "Confirmed",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    response = client.get(
+        f"/confirmations/work/{work_id}",
+        headers=auth_headers(customer_token),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["work_id"] == work_id
+
+
+def test_worker_can_get_confirmation_for_work(client):
+    register_user(
+        client,
+        "Customer",
+        "customer@example.com",
+    )
+
+    register_user(
+        client,
+        "Worker",
+        "worker@example.com",
+    )
+
+    customer_token = login_user(
+        client,
+        "customer@example.com",
+    )
+
+    worker_token = login_user(
+        client,
+        "worker@example.com",
+    )
+
+    work_id = create_completed_work(
+        client,
+        customer_token,
+        worker_token,
+    )
+
+    create_response = client.post(
+        "/confirmations/",
+        headers=auth_headers(customer_token),
+        json={
+            "work_id": work_id,
+            "comment": "Confirmed",
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    response = client.get(
+        f"/confirmations/work/{work_id}",
+        headers=auth_headers(worker_token),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["work_id"] == work_id
+
+
+def test_unrelated_user_cannot_get_confirmation_for_work(client):
+    register_user(
+        client,
+        "Customer",
+        "customer@example.com",
+    )
+
+    register_user(
+        client,
+        "Worker",
+        "worker@example.com",
+    )
+
+    register_user(
+        client,
+        "Other User",
+        "other-confirmation@example.com",
+    )
+
+    customer_token = login_user(
+        client,
+        "customer@example.com",
+    )
+
+    worker_token = login_user(
+        client,
+        "worker@example.com",
+    )
+
+    other_token = login_user(
+        client,
+        "other-confirmation@example.com",
+    )
+
+    work_id = create_completed_work(
+        client,
+        customer_token,
+        worker_token,
+    )
+
+    create_response = client.post(
+        "/confirmations/",
+        headers=auth_headers(customer_token),
+        json={
+            "work_id": work_id,
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    response = client.get(
+        f"/confirmations/work/{work_id}",
+        headers=auth_headers(other_token),
+    )
+
+    assert response.status_code == 403
+
+
+def test_get_confirmation_for_work_requires_existing_confirmation(
+    client,
+):
+    register_user(
+        client,
+        "Customer",
+        "customer@example.com",
+    )
+
+    register_user(
+        client,
+        "Worker",
+        "worker@example.com",
+    )
+
+    customer_token = login_user(
+        client,
+        "customer@example.com",
+    )
+
+    worker_token = login_user(
+        client,
+        "worker@example.com",
+    )
+
+    work_id = create_completed_work(
+        client,
+        customer_token,
+        worker_token,
+    )
+
+    response = client.get(
+        f"/confirmations/work/{work_id}",
+        headers=auth_headers(customer_token),
+    )
+
+    assert response.status_code == 403

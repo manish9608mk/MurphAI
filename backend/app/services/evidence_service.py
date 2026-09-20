@@ -112,6 +112,68 @@ def create_evidence(
 
     return evidence
 
+def get_evidence_for_work(
+    db: Session,
+    work_id: int,
+    current_user_id: int,
+):
+    """
+    Return all evidence belonging to a Work record.
+
+    Both the Job customer and assigned worker can view it.
+    """
+
+    work = (
+        db.query(Work)
+        .filter(Work.id == work_id)
+        .first()
+    )
+
+    if not work:
+        raise PermissionDeniedException("Work not found")
+
+    assignment = (
+        db.query(Assignment)
+        .filter(Assignment.id == work.assignment_id)
+        .first()
+    )
+
+    if not assignment:
+        raise AssignmentNotFoundException()
+
+    job = (
+        db.query(Job)
+        .filter(Job.id == assignment.job_id)
+        .first()
+    )
+
+    worker = (
+        db.query(Worker)
+        .filter(Worker.id == assignment.worker_id)
+        .first()
+    )
+
+    is_customer = (
+        job is not None
+        and job.customer_id == current_user_id
+    )
+
+    is_worker = (
+        worker is not None
+        and worker.user_id == current_user_id
+    )
+
+    if not is_customer and not is_worker:
+        raise PermissionDeniedException(
+            "You are not allowed to view evidence for this work"
+        )
+
+    return (
+        db.query(Evidence)
+        .filter(Evidence.work_id == work_id)
+        .order_by(Evidence.created_at.desc())
+        .all()
+    )
 
 def get_evidence(
     db: Session,

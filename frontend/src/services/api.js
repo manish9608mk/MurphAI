@@ -230,3 +230,51 @@ export function updateWorkStatus(
     }),
   })
 }
+
+export function getEvidenceForWork(workId) {
+  return request(`/evidence/work/${workId}`, {
+    method: 'GET',
+  })
+}
+
+export function createEvidence(
+  workId,
+  evidenceType,
+  url,
+  description = null,
+) {
+  return request('/evidence/', {
+    method: 'POST',
+    body: JSON.stringify({
+      work_id: workId,
+      evidence_type: evidenceType,
+      url,
+      description,
+    }),
+  })
+}
+
+export function getWorkByJob(jobId) {
+  return request(`/works/job/${jobId}`, {
+    method: 'GET',
+  })
+}
+
+export function getConfirmationForWork(workId) {
+  return request(`/confirmations/work/${workId}`, {
+    method: 'GET',
+  })
+}
+
+export function createConfirmation(
+  workId,
+  comment = null,
+) {
+  return request('/confirmations/', {
+    method: 'POST',
+    body: JSON.stringify({
+      work_id: workId,
+      comment,
+    }),
+  })
+}

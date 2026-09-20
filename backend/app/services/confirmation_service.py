@@ -166,3 +166,86 @@ def get_confirmation(
         )
 
     return confirmation
+
+def get_confirmation_for_work(
+    db: Session,
+    work_id: int,
+    current_user_id: int,
+):
+    """
+    Get the confirmation connected to a Work record.
+
+    Only the Job customer or assigned worker can view it.
+    """
+
+    work = (
+        db.query(Work)
+        .filter(Work.id == work_id)
+        .first()
+    )
+
+    if not work:
+        raise PermissionDeniedException(
+            "Work not found"
+        )
+
+    assignment = (
+        db.query(Assignment)
+        .filter(
+            Assignment.id == work.assignment_id
+        )
+        .first()
+    )
+
+    if not assignment:
+        raise AssignmentNotFoundException()
+
+    job = (
+        db.query(Job)
+        .filter(Job.id == assignment.job_id)
+        .first()
+    )
+
+    if not job:
+        raise PermissionDeniedException(
+            "Job not found"
+        )
+
+    from backend.app.models.worker import Worker
+
+    worker = (
+        db.query(Worker)
+        .filter(
+            Worker.id == assignment.worker_id
+        )
+        .first()
+    )
+
+    is_customer = (
+        job.customer_id == current_user_id
+    )
+
+    is_worker = (
+        worker is not None
+        and worker.user_id == current_user_id
+    )
+
+    if not is_customer and not is_worker:
+        raise PermissionDeniedException(
+            "You are not allowed to view this confirmation"
+        )
+
+    confirmation = (
+        db.query(Confirmation)
+        .filter(
+            Confirmation.work_id == work_id
+        )
+        .first()
+    )
+
+    if not confirmation:
+        raise PermissionDeniedException(
+            "Confirmation not found"
+        )
+
+    return confirmation

@@ -12,6 +12,7 @@ from backend.app.schemas.evidence import (
 from backend.app.services.evidence_service import (
     create_evidence,
     get_evidence,
+    get_evidence_for_work,
 )
 
 
@@ -54,6 +55,26 @@ def create_new_evidence(
 # ============================================================
 # Get Evidence
 # ============================================================
+@router.get(
+    "/work/{work_id}",
+    response_model=list[EvidenceResponse],
+)
+def get_work_evidence(
+    work_id: int,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """
+    Get all evidence belonging to a Work record.
+
+    Both the customer and assigned worker can view it.
+    """
+
+    return get_evidence_for_work(
+        db=db,
+        work_id=work_id,
+        current_user_id=current_user_id,
+    )
 
 @router.get(
     "/{evidence_id}",

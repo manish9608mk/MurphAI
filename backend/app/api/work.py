@@ -16,11 +16,11 @@ from backend.app.services.work_service import (
     create_work,
     get_work,
     get_work_for_assignment,
+    get_work_for_job,
     get_my_works,
     update_work,
     update_work_status,
 )
-
 
 router = APIRouter(
     prefix="/works",
@@ -87,6 +87,24 @@ def get_work_for_assignment_route(
         current_user_id=current_user_id,
     )
 
+@router.get(
+    "/job/{job_id}",
+    response_model=WorkResponse,
+)
+def get_work_for_job_route(
+    job_id: int,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """
+    Get the Work connected to a Job.
+    """
+
+    return get_work_for_job(
+        db=db,
+        job_id=job_id,
+        current_user_id=current_user_id,
+    )
 
 @router.get(
     "/{work_id}",

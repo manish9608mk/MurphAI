@@ -12,6 +12,7 @@ from backend.app.schemas.confirmation import (
 from backend.app.services.confirmation_service import (
     create_confirmation,
     get_confirmation,
+    get_confirmation_for_work,
 )
 
 
@@ -50,6 +51,26 @@ def create_new_confirmation(
 # ============================================================
 # Get Confirmation
 # ============================================================
+@router.get(
+    "/work/{work_id}",
+    response_model=ConfirmationResponse,
+)
+def get_confirmation_for_work_route(
+    work_id: int,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(
+        get_current_user_id
+    ),
+):
+    """
+    Get the confirmation connected to a Work record.
+    """
+
+    return get_confirmation_for_work(
+        db=db,
+        work_id=work_id,
+        current_user_id=current_user_id,
+    )
 
 @router.get(
     "/{confirmation_id}",

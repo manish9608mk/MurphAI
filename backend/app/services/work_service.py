@@ -198,6 +198,68 @@ def get_work_for_assignment(
 
     return work
 
+def get_work_for_job(
+    db: Session,
+    job_id: int,
+    current_user_id: int,
+):
+    """
+    Get the Work record connected to a Job.
+
+    The Job customer and assigned worker can view it.
+    """
+
+    job = (
+        db.query(Job)
+        .filter(Job.id == job_id)
+        .first()
+    )
+
+    if not job:
+        raise PermissionDeniedException(
+            "Job not found"
+        )
+
+    rows = (
+        db.query(Work, Assignment, Worker)
+        .join(
+            Assignment,
+            Work.assignment_id == Assignment.id,
+        )
+        .join(
+            Worker,
+            Assignment.worker_id == Worker.id,
+        )
+        .filter(
+            Assignment.job_id == job_id,
+        )
+        .order_by(
+            Work.created_at.desc(),
+        )
+        .all()
+    )
+
+    if not rows:
+        raise PermissionDeniedException(
+            "Work not found for this job"
+        )
+
+    work, assignment, worker = rows[0]
+
+    is_customer = (
+        job.customer_id == current_user_id
+    )
+
+    is_worker = (
+        worker.user_id == current_user_id
+    )
+
+    if not is_customer and not is_worker:
+        raise PermissionDeniedException(
+            "You are not allowed to view work for this job"
+        )
+
+    return work
 
 def get_my_works(
     db: Session,
