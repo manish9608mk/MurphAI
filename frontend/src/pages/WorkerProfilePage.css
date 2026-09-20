@@ -1,0 +1,443 @@
+/* ---------- Worker Self Profile ---------- */
+
+.worker-profile-shell {
+  background: var(--bg);
+}
+
+.worker-profile-content {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 28px 0 65px;
+}
+
+.worker-profile-hero {
+  margin-top: 38px;
+  padding: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 30px;
+  border: 1px solid var(--border-light);
+  border-radius: 24px;
+  background: linear-gradient(
+    135deg,
+    #ffffff 0%,
+    #f7fbff 100%
+  );
+  box-shadow: var(--shadow-sm);
+}
+
+.worker-profile-hero-copy {
+  min-width: 0;
+}
+
+.worker-profile-hero h1 {
+  max-width: 760px;
+  margin: 8px 0 11px;
+  color: var(--text);
+  font-size: clamp(36px, 5vw, 54px);
+  line-height: 1;
+  letter-spacing: -0.055em;
+}
+
+.worker-profile-hero p {
+  max-width: 700px;
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+.worker-profile-hero-meta {
+  margin-top: 18px;
+  display: flex;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.worker-profile-hero-meta div {
+  min-height: 33px;
+  padding: 0 11px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--border-light);
+  border-radius: 999px;
+  color: var(--text-secondary);
+  background: var(--surface);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.worker-profile-hero-meta svg {
+  color: var(--green);
+}
+
+.worker-profile-hero-icon {
+  width: 82px;
+  height: 82px;
+  min-width: 82px;
+  display: grid;
+  place-items: center;
+  border-radius: 24px;
+  color: var(--green);
+  background: var(--green-soft);
+}
+
+.worker-profile-feedback {
+  margin-top: 14px;
+  padding: 13px 15px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  color: var(--green);
+  background: var(--green-soft);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.worker-profile-feedback-error {
+  color: var(--danger, #d14343);
+  background: var(--danger-soft, #fff4f4);
+}
+
+.worker-profile-layout {
+  margin-top: 16px;
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.65fr);
+  gap: 16px;
+}
+
+.worker-profile-panel {
+  padding: 22px;
+  border: 1px solid var(--border-light);
+  border-radius: 24px;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+
+.worker-profile-panel-header h2 {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 22px;
+  letter-spacing: -0.03em;
+}
+
+.worker-profile-panel-header p {
+  max-width: 650px;
+  margin: 7px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.worker-profile-form {
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.worker-profile-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.worker-profile-form label > span {
+  color: var(--text);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.worker-profile-form label > small {
+  align-self: flex-end;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.worker-profile-form textarea,
+.worker-profile-form input,
+.worker-profile-skill-form input {
+  width: 100%;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  color: var(--text);
+  background: var(--surface-secondary);
+  font: inherit;
+  outline: none;
+}
+
+.worker-profile-form textarea {
+  min-height: 130px;
+  padding: 12px 13px;
+  resize: vertical;
+  line-height: 1.6;
+}
+
+.worker-profile-form input {
+  min-height: 43px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+
+.worker-profile-form textarea:focus,
+.worker-profile-form input:focus,
+.worker-profile-skill-form input:focus {
+  border-color: var(--blue);
+}
+
+.worker-profile-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.worker-profile-input-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.worker-profile-input-wrap > svg {
+  position: absolute;
+  left: 12px;
+  color: var(--text-muted);
+}
+
+.worker-profile-input-wrap input {
+  padding-left: 36px;
+  padding-right: 45px;
+}
+
+.worker-profile-input-wrap small {
+  position: absolute;
+  right: 12px;
+  color: var(--text-muted);
+  font-size: 9px;
+}
+
+.worker-profile-availability {
+  min-height: 66px;
+  padding: 12px 13px;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  background: var(--surface-secondary);
+}
+
+.worker-profile-availability > span:first-child {
+  min-width: 0;
+  display: block;
+}
+
+.worker-profile-availability strong,
+.worker-profile-availability small {
+  display: block;
+}
+
+.worker-profile-availability strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.worker-profile-availability small {
+  margin-top: 3px;
+  color: var(--text-muted);
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+.worker-profile-availability input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.worker-profile-toggle {
+  width: 45px;
+  height: 25px;
+  min-width: 45px;
+  position: relative;
+  border-radius: 999px;
+  background: var(--border);
+  cursor: pointer;
+}
+
+.worker-profile-toggle::after {
+  content: '';
+  position: absolute;
+  width: 19px;
+  height: 19px;
+  top: 3px;
+  left: 3px;
+  border-radius: 50%;
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  transition: transform 160ms ease;
+}
+
+.worker-profile-availability input:checked + .worker-profile-toggle {
+  background: var(--green);
+}
+
+.worker-profile-availability input:checked + .worker-profile-toggle::after {
+  transform: translateX(20px);
+}
+
+.worker-profile-form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 9px;
+  flex-wrap: wrap;
+}
+
+.worker-profile-skill-form {
+  margin-top: 20px;
+  display: flex;
+  gap: 8px;
+}
+
+.worker-profile-skill-form input {
+  min-height: 41px;
+  padding: 0 11px;
+  font-size: 11px;
+}
+
+.worker-profile-skill-form button {
+  flex: 0 0 auto;
+}
+
+.worker-profile-skill-list {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.worker-profile-skill-chip {
+  min-height: 39px;
+  padding: 0 8px 0 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: 12px;
+  background: var(--surface-secondary);
+}
+
+.worker-profile-skill-chip > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.worker-profile-skill-chip > span svg {
+  color: var(--green);
+}
+
+.worker-profile-skill-chip button {
+  width: 27px;
+  height: 27px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  border-radius: 8px;
+  color: var(--text-muted);
+  background: transparent;
+  cursor: pointer;
+}
+
+.worker-profile-skill-chip button:hover:not(:disabled) {
+  color: var(--text);
+  background: var(--surface);
+}
+
+.worker-profile-skill-chip button:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
+.worker-profile-empty {
+  min-height: 150px;
+  margin-top: 18px;
+  padding: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-align: center;
+  border: 1px dashed var(--border);
+  border-radius: 17px;
+  color: var(--text-muted);
+  background: var(--surface-secondary);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.worker-profile-empty svg {
+  min-width: 18px;
+  color: var(--blue);
+}
+
+.worker-profile-spinning {
+  animation: worker-profile-spin 800ms linear infinite;
+}
+
+@keyframes worker-profile-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 900px) {
+  .worker-profile-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 680px) {
+  .worker-profile-content {
+    width: min(100% - 28px, 1180px);
+    padding-top: 20px;
+  }
+
+  .worker-profile-hero {
+    margin-top: 28px;
+    padding: 22px;
+    align-items: flex-start;
+  }
+
+  .worker-profile-hero h1 {
+    font-size: 36px;
+  }
+
+  .worker-profile-hero-icon {
+    width: 58px;
+    height: 58px;
+    min-width: 58px;
+    border-radius: 18px;
+  }
+
+  .worker-profile-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .worker-profile-skill-form {
+    flex-direction: column;
+  }
+
+  .worker-profile-skill-form button {
+    justify-content: center;
+  }
+}

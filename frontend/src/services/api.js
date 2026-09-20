@@ -17,6 +17,10 @@ async function request(path, options = {}) {
     headers,
   })
 
+  if (response.status === 204) {
+    return null
+  }
+
   const contentType =
     response.headers.get('content-type') || ''
 
@@ -338,4 +342,48 @@ export function getWorkerPublicProfile(workerId) {
   return request(`/workers/${workerId}/profile`, {
     method: 'GET',
   })
+}
+
+export function getMyWorker() {
+  return request('/workers/me', {
+    method: 'GET',
+  })
+}
+
+export function createWorker(workerData) {
+  return request('/workers/', {
+    method: 'POST',
+    body: JSON.stringify(workerData),
+  })
+}
+
+export function updateWorker(workerId, workerData) {
+  return request(`/workers/${workerId}`, {
+    method: 'PUT',
+    body: JSON.stringify(workerData),
+  })
+}
+
+export function getWorkerSkills(workerId) {
+  return request(`/workers/${workerId}/skills`, {
+    method: 'GET',
+  })
+}
+
+export function addWorkerSkill(workerId, name) {
+  return request(`/workers/${workerId}/skills`, {
+    method: 'POST',
+    body: JSON.stringify({
+      name,
+    }),
+  })
+}
+
+export function removeWorkerSkill(workerId, skillId) {
+  return request(
+    `/workers/${workerId}/skills/${skillId}`,
+    {
+      method: 'DELETE',
+    },
+  )
 }

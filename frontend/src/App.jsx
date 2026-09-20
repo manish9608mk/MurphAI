@@ -19,6 +19,7 @@ import WorkerAssignmentsPage from './pages/WorkerAssignmentsPage'
 import WorkerWorkPage from './pages/WorkerWorkPage'
 import WorkerHistoryPage from './pages/WorkerHistoryPage'
 import WorkerPublicProfilePage from './pages/WorkerPublicProfilePage'
+import WorkerProfilePage from './pages/WorkerProfilePage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -88,6 +89,11 @@ function App() {
           <Route
             path="/workers/:workerId/profile"
             element={<WorkerPublicProfilePage />}
+          />
+
+          <Route
+            path="/workers/profile"
+            element={<WorkerProfilePage />}
           />
         </Route>
 

@@ -220,6 +220,7 @@ function DashboardPage() {
           <button
             type="button"
             className="dashboard-nav-item"
+            onClick={() => navigate('/workers/profile')}
           >
             <UserRound size={19} />
             <span>Profile</span>
