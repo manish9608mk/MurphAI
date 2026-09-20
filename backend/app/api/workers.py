@@ -7,12 +7,20 @@ from backend.app.schemas.worker import (
     WorkerResponse,
 )
 
+from backend.app.schemas.worker_history import (
+    WorkerVerifiedHistoryResponse,
+)
+
 from backend.app.services.worker_service import (
     create_worker,
     get_workers,
     get_worker,
     update_worker,
     delete_worker,
+)
+
+from backend.app.services.worker_history_service import (
+    get_my_verified_history,
 )
 
 from backend.app.core.dependencies import (
@@ -55,6 +63,33 @@ def get_all_workers(
     current_user_id: int = Depends(get_current_user_id),
 ):
     return get_workers(db)
+
+
+@router.get(
+    "/me/history",
+    response_model=WorkerVerifiedHistoryResponse,
+)
+def get_my_worker_history(
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """
+    Return verified professional history for the
+    authenticated worker.
+
+    Verification requires:
+
+        completed Work
+        +
+        customer confirmation
+        +
+        paid Payment
+    """
+
+    return get_my_verified_history(
+        db=db,
+        current_user_id=current_user_id,
+    )
 
 
 @router.get(
