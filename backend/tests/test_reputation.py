@@ -510,3 +510,211 @@ def test_unrelated_user_cannot_view_reputation(client, db):
     )
 
     assert response.status_code == 403
+
+def test_customer_can_get_reputation_for_work(
+    client,
+    db,
+):
+    customer = create_user(
+        db,
+        "Customer",
+        "customer@example.com",
+    )
+
+    worker_user = create_user(
+        db,
+        "Worker",
+        "worker@example.com",
+    )
+
+    _, _, _, work = create_completed_work(
+        db,
+        customer,
+        worker_user,
+    )
+
+    customer_token = get_token(
+        client,
+        customer.email,
+    )
+
+    create_response = client.post(
+        "/reputations/",
+        json={
+            "work_id": work.id,
+            "rating": 5,
+            "comment": "Excellent work",
+        },
+        headers={
+            "Authorization": f"Bearer {customer_token}"
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    response = client.get(
+        f"/reputations/work/{work.id}",
+        headers={
+            "Authorization": f"Bearer {customer_token}"
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["work_id"] == work.id
+    assert response.json()["rating"] == 5
+
+
+def test_worker_can_get_reputation_for_work(
+    client,
+    db,
+):
+    customer = create_user(
+        db,
+        "Customer",
+        "customer@example.com",
+    )
+
+    worker_user = create_user(
+        db,
+        "Worker",
+        "worker@example.com",
+    )
+
+    _, _, _, work = create_completed_work(
+        db,
+        customer,
+        worker_user,
+    )
+
+    customer_token = get_token(
+        client,
+        customer.email,
+    )
+
+    create_response = client.post(
+        "/reputations/",
+        json={
+            "work_id": work.id,
+            "rating": 4,
+            "comment": "Good work",
+        },
+        headers={
+            "Authorization": f"Bearer {customer_token}"
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    worker_token = get_token(
+        client,
+        worker_user.email,
+    )
+
+    response = client.get(
+        f"/reputations/work/{work.id}",
+        headers={
+            "Authorization": f"Bearer {worker_token}"
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.json()["work_id"] == work.id
+    assert response.json()["rating"] == 4
+
+
+def test_unrelated_user_cannot_get_reputation_for_work(
+    client,
+    db,
+):
+    customer = create_user(
+        db,
+        "Customer",
+        "customer@example.com",
+    )
+
+    worker_user = create_user(
+        db,
+        "Worker",
+        "worker@example.com",
+    )
+
+    unrelated_user = create_user(
+        db,
+        "Unrelated",
+        "unrelated@example.com",
+    )
+
+    _, _, _, work = create_completed_work(
+        db,
+        customer,
+        worker_user,
+    )
+
+    customer_token = get_token(
+        client,
+        customer.email,
+    )
+
+    create_response = client.post(
+        "/reputations/",
+        json={
+            "work_id": work.id,
+            "rating": 5,
+        },
+        headers={
+            "Authorization": f"Bearer {customer_token}"
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    unrelated_token = get_token(
+        client,
+        unrelated_user.email,
+    )
+
+    response = client.get(
+        f"/reputations/work/{work.id}",
+        headers={
+            "Authorization": f"Bearer {unrelated_token}"
+        },
+    )
+
+    assert response.status_code == 403
+
+
+def test_get_reputation_for_work_requires_existing_reputation(
+    client,
+    db,
+):
+    customer = create_user(
+        db,
+        "Customer",
+        "customer@example.com",
+    )
+
+    worker_user = create_user(
+        db,
+        "Worker",
+        "worker@example.com",
+    )
+
+    _, _, _, work = create_completed_work(
+        db,
+        customer,
+        worker_user,
+    )
+
+    customer_token = get_token(
+        client,
+        customer.email,
+    )
+
+    response = client.get(
+        f"/reputations/work/{work.id}",
+        headers={
+            "Authorization": f"Bearer {customer_token}"
+        },
+    )
+
+    assert response.status_code == 403

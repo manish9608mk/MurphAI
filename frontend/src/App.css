@@ -4200,3 +4200,290 @@ button:not(:disabled):active {
     width: 100%;
   }
 }
+
+/* ---------- Customer Reputation ---------- */
+
+.job-details-reputation {
+  margin-top: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+}
+
+.job-details-reputation-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.job-details-reputation-header h3 {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 16px;
+  letter-spacing: -0.025em;
+}
+
+.job-details-reputation-header p {
+  max-width: 650px;
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.job-details-reputation-badge {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 11px;
+  color: var(--green);
+  background: var(--green-soft);
+  font-size: 19px;
+}
+
+.job-details-reputation-loading,
+.job-details-reputation-locked {
+  margin-top: 14px;
+  min-height: 72px;
+  padding: 13px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: 13px;
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.job-details-reputation-locked svg {
+  flex: 0 0 auto;
+}
+
+.job-details-reputation-locked strong,
+.job-details-reputation-locked span {
+  display: block;
+}
+
+.job-details-reputation-locked strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.job-details-reputation-locked span {
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.job-details-reputation-form {
+  margin-top: 14px;
+  padding: 15px;
+  border: 1px solid var(--border-light);
+  border-radius: 14px;
+  background: var(--surface-secondary);
+}
+
+.job-details-reputation-rating-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.job-details-reputation-rating-label span {
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.job-details-reputation-rating-label strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.job-details-reputation-stars {
+  margin-top: 10px;
+  display: flex;
+  gap: 5px;
+}
+
+.job-details-reputation-star {
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  color: var(--text-faint);
+  background: var(--surface);
+  font-size: 19px;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    color 160ms ease,
+    border-color 160ms ease;
+}
+
+.job-details-reputation-star:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.job-details-reputation-star-active {
+  color: var(--green);
+  border-color: #c5e5d1;
+  background: var(--green-soft);
+}
+
+.job-details-reputation-star:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.job-details-reputation-label {
+  display: block;
+  margin-top: 15px;
+  margin-bottom: 6px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.job-details-reputation-textarea {
+  width: 100%;
+  min-height: 92px;
+  padding: 11px 12px;
+  resize: vertical;
+  border: 1px solid var(--border);
+  border-radius: 11px;
+  outline: none;
+  color: var(--text);
+  background: var(--surface);
+  font: inherit;
+  font-size: 10px;
+  line-height: 1.5;
+  box-sizing: border-box;
+}
+
+.job-details-reputation-textarea:focus {
+  border-color: var(--blue);
+}
+
+.job-details-reputation-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.job-details-reputation-footer {
+  margin-top: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.job-details-reputation-footer > span {
+  color: var(--text-faint);
+  font-size: 9px;
+}
+
+.job-details-reputation-button {
+  min-height: 39px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--green);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+.job-details-reputation-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.job-details-reputation-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.job-details-reputation-complete {
+  margin-top: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  border: 1px solid #c5e5d1;
+  border-radius: 14px;
+  background: var(--green-soft);
+}
+
+.job-details-reputation-complete-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  color: var(--green);
+  background: var(--surface);
+}
+
+.job-details-reputation-complete-content {
+  min-width: 0;
+}
+
+.job-details-reputation-complete-content > strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--green);
+  font-size: 17px;
+  letter-spacing: 0.04em;
+}
+
+.job-details-reputation-complete-content > span {
+  display: block;
+  margin-top: 3px;
+  color: var(--text-secondary);
+  font-size: 10px;
+}
+
+.job-details-reputation-complete-content p {
+  margin: 9px 0 0;
+  color: var(--text);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.job-details-reputation-complete-content small {
+  display: block;
+  margin-top: 8px;
+  color: var(--text-faint);
+  font-size: 9px;
+}
+
+@media (max-width: 760px) {
+  .job-details-reputation-header {
+    flex-direction: column;
+  }
+
+  .job-details-reputation-footer {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .job-details-reputation-button {
+    width: 100%;
+  }
+}

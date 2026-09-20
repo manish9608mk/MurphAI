@@ -306,3 +306,24 @@ export function markPaymentAsPaid(paymentId) {
     },
   )
 }
+
+export function getReputationForWork(workId) {
+  return request(`/reputations/work/${workId}`, {
+    method: 'GET',
+  })
+}
+
+export function createReputation(
+  workId,
+  rating,
+  comment = null,
+) {
+  return request('/reputations/', {
+    method: 'POST',
+    body: JSON.stringify({
+      work_id: workId,
+      rating,
+      comment,
+    }),
+  })
+}

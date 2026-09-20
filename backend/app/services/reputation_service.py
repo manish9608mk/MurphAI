@@ -218,3 +218,52 @@ def get_reputation(
         )
 
     return reputation
+
+def get_reputation_for_work(
+    db: Session,
+    work_id: int,
+    current_user_id: int,
+):
+    """
+    Get the reputation connected to a Work record.
+
+    Only the customer who gave the reputation
+    or the worker who received it can view it.
+    """
+
+    reputation = (
+        db.query(Reputation)
+        .filter(
+            Reputation.work_id == work_id
+        )
+        .first()
+    )
+
+    if not reputation:
+        raise PermissionDeniedException(
+            "Reputation not found"
+        )
+
+    is_customer = (
+        reputation.customer_id == current_user_id
+    )
+
+    worker = (
+        db.query(Worker)
+        .filter(
+            Worker.id == reputation.worker_id
+        )
+        .first()
+    )
+
+    is_worker = (
+        worker is not None
+        and worker.user_id == current_user_id
+    )
+
+    if not is_customer and not is_worker:
+        raise PermissionDeniedException(
+            "You are not allowed to view this reputation"
+        )
+
+    return reputation

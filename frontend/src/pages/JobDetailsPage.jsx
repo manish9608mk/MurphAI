@@ -17,12 +17,14 @@ import {
   createConfirmation,
   createJobInterest,
   createPayment,
+  createReputation,
   getConfirmationForWork,
   getCurrentUser,
   getEvidenceForWork,
   getJob,
   getMyJobInterests,
   getPaymentForWork,
+  getReputationForWork,
   getWorkByJob,
   markPaymentAsPaid,
   withdrawJobInterest,
@@ -38,35 +40,67 @@ function JobDetailsPage() {
   const [work, setWork] = useState(null)
   const [evidence, setEvidence] = useState([])
 
-  const [confirmation, setConfirmation] = useState(null)
-    const [payment, setPayment] = useState(null)
+  const [confirmation, setConfirmation] =
+    useState(null)
+
+  const [payment, setPayment] =
+    useState(null)
+
   const [paymentLoading, setPaymentLoading] =
     useState(true)
+
   const [paymentSaving, setPaymentSaving] =
     useState(false)
+
+  const [reputation, setReputation] =
+    useState(null)
+
+  const [reputationLoading, setReputationLoading] =
+    useState(true)
+
+  const [reputationSaving, setReputationSaving] =
+    useState(false)
+
+  const [reputationRating, setReputationRating] =
+    useState(0)
+
+  const [reputationComment, setReputationComment] =
+    useState('')
+
   const [confirmationComment, setConfirmationComment] =
     useState('')
+
   const [confirmationLoading, setConfirmationLoading] =
     useState(true)
+
   const [confirmationSaving, setConfirmationSaving] =
     useState(false)
 
-  const [deliveryLoading, setDeliveryLoading] = useState(true)
-  const [loading, setLoading] = useState(true)
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [deliveryLoading, setDeliveryLoading] =
+    useState(true)
 
-  const [error, setError] = useState('')
-  const [actionError, setActionError] = useState('')
+  const [loading, setLoading] =
+    useState(true)
+
+  const [isSubmitting, setIsSubmitting] =
+    useState(false)
+
+  const [error, setError] =
+    useState('')
+
+  const [actionError, setActionError] =
+    useState('')
 
   useEffect(() => {
     let cancelled = false
 
     async function loadJobDetails() {
       try {
-        const [jobData, userData] = await Promise.all([
-          getJob(jobId),
-          getCurrentUser(),
-        ])
+        const [jobData, userData] =
+          await Promise.all([
+            getJob(jobId),
+            getCurrentUser(),
+          ])
 
         if (cancelled) {
           return
@@ -76,26 +110,33 @@ function JobDetailsPage() {
         setUser(userData)
 
         const isCustomerOwner =
-          userData.id === jobData.customer_id
+          userData.id ===
+          jobData.customer_id
 
         if (!isCustomerOwner) {
           try {
-            const interests = await getMyJobInterests()
+            const interests =
+              await getMyJobInterests()
 
             if (!cancelled) {
-              const existingInterest = Array.isArray(interests)
-                ? interests.find(
-                    (item) =>
-                      item.job_id === jobData.id,
-                  )
-                : null
+              const existingInterest =
+                Array.isArray(interests)
+                  ? interests.find(
+                      (item) =>
+                        item.job_id ===
+                        jobData.id,
+                    )
+                  : null
 
-              setInterest(existingInterest)
+              setInterest(
+                existingInterest,
+              )
             }
           } catch (err) {
             if (
               err instanceof Error &&
-              err.message === 'Not authenticated'
+              err.message ===
+                'Not authenticated'
             ) {
               throw err
             }
@@ -104,9 +145,10 @@ function JobDetailsPage() {
 
         if (isCustomerOwner) {
           try {
-            const workData = await getWorkByJob(
-              jobData.id,
-            )
+            const workData =
+              await getWorkByJob(
+                jobData.id,
+              )
 
             if (cancelled) {
               return
@@ -122,7 +164,9 @@ function JobDetailsPage() {
 
               if (!cancelled) {
                 setEvidence(
-                  Array.isArray(evidenceData)
+                  Array.isArray(
+                    evidenceData,
+                  )
                     ? evidenceData
                     : [],
                 )
@@ -138,27 +182,11 @@ function JobDetailsPage() {
                 await getConfirmationForWork(
                   workData.id,
                 )
-                            try {
-              const paymentData =
-                await getPaymentForWork(
-                  workData.id,
+
+              if (!cancelled) {
+                setConfirmation(
+                  confirmationData,
                 )
-
-              if (!cancelled) {
-                setPayment(paymentData)
-              }
-            } catch {
-              if (!cancelled) {
-                setPayment(null)
-              }
-            } finally {
-              if (!cancelled) {
-                setPaymentLoading(false)
-              }
-            }
-
-              if (!cancelled) {
-                setConfirmation(confirmationData)
               }
             } catch {
               if (!cancelled) {
@@ -166,7 +194,59 @@ function JobDetailsPage() {
               }
             } finally {
               if (!cancelled) {
-                setConfirmationLoading(false)
+                setConfirmationLoading(
+                  false,
+                )
+              }
+            }
+
+            try {
+              const paymentData =
+                await getPaymentForWork(
+                  workData.id,
+                )
+
+              if (!cancelled) {
+                setPayment(
+                  paymentData,
+                )
+              }
+            } catch {
+              if (!cancelled) {
+                setPayment(null)
+              }
+            } finally {
+              if (!cancelled) {
+                setPaymentLoading(
+                  false,
+                )
+              }
+            }
+
+            try {
+              const reputationData =
+                await getReputationForWork(
+                  workData.id,
+                )
+
+              if (!cancelled) {
+                setReputation(
+                  reputationData,
+                )
+
+                setReputationRating(
+                  reputationData.rating,
+                )
+              }
+            } catch {
+              if (!cancelled) {
+                setReputation(null)
+              }
+            } finally {
+              if (!cancelled) {
+                setReputationLoading(
+                  false,
+                )
               }
             }
           } catch {
@@ -174,11 +254,30 @@ function JobDetailsPage() {
               setWork(null)
               setEvidence([])
               setConfirmation(null)
-              setConfirmationLoading(false)
+              setPayment(null)
+              setReputation(null)
+
+              setConfirmationLoading(
+                false,
+              )
+
+              setPaymentLoading(
+                false,
+              )
+
+              setReputationLoading(
+                false,
+              )
             }
           }
         } else if (!cancelled) {
-          setConfirmationLoading(false)
+          setConfirmationLoading(
+            false,
+          )
+
+          setPaymentLoading(false)
+
+          setReputationLoading(false)
         }
       } catch (err) {
         if (!cancelled) {
@@ -217,10 +316,12 @@ function JobDetailsPage() {
     setConfirmationSaving(true)
 
     try {
-      const result = await createConfirmation(
-        work.id,
-        confirmationComment.trim() || null,
-      )
+      const result =
+        await createConfirmation(
+          work.id,
+          confirmationComment.trim() ||
+            null,
+        )
 
       setConfirmation(result)
       setConfirmationComment('')
@@ -235,7 +336,7 @@ function JobDetailsPage() {
     }
   }
 
-    async function handleCreatePayment() {
+  async function handleCreatePayment() {
     if (
       !work ||
       work.status !== 'completed' ||
@@ -250,9 +351,10 @@ function JobDetailsPage() {
     setPaymentSaving(true)
 
     try {
-      const result = await createPayment(
-        work.id,
-      )
+      const result =
+        await createPayment(
+          work.id,
+        )
 
       setPayment(result)
     } catch (err) {
@@ -275,13 +377,14 @@ function JobDetailsPage() {
       return
     }
 
-    const confirmed = window.confirm(
-      `Mark the ₹${Number(
-        payment.amount,
-      ).toLocaleString(
-        'en-IN',
-      )} payment as paid?`,
-    )
+    const confirmed =
+      window.confirm(
+        `Mark the ₹${Number(
+          payment.amount,
+        ).toLocaleString(
+          'en-IN',
+        )} payment as paid?`,
+      )
 
     if (!confirmed) {
       return
@@ -308,6 +411,44 @@ function JobDetailsPage() {
     }
   }
 
+  async function handleCreateReputation() {
+    if (
+      !work ||
+      work.status !== 'completed' ||
+      !payment ||
+      payment.status !== 'paid' ||
+      reputation ||
+      reputationRating < 1 ||
+      reputationSaving
+    ) {
+      return
+    }
+
+    setActionError('')
+    setReputationSaving(true)
+
+    try {
+      const result =
+        await createReputation(
+          work.id,
+          reputationRating,
+          reputationComment.trim() ||
+            null,
+        )
+
+      setReputation(result)
+      setReputationComment('')
+    } catch (err) {
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to submit this reputation.',
+      )
+    } finally {
+      setReputationSaving(false)
+    }
+  }
+
   async function handleInterest() {
     if (!job) {
       return
@@ -317,9 +458,10 @@ function JobDetailsPage() {
     setIsSubmitting(true)
 
     try {
-      const result = await createJobInterest(
-        job.id,
-      )
+      const result =
+        await createJobInterest(
+          job.id,
+        )
 
       setInterest(result)
     } catch (err) {
@@ -342,9 +484,10 @@ function JobDetailsPage() {
     setIsSubmitting(true)
 
     try {
-      const result = await withdrawJobInterest(
-        interest.id,
-      )
+      const result =
+        await withdrawJobInterest(
+          interest.id,
+        )
 
       setInterest(result)
     } catch (err) {
@@ -419,7 +562,8 @@ function JobDetailsPage() {
     job.status === 'open'
 
   const isCustomerOwner =
-    user?.id === job.customer_id
+    user?.id ===
+    job.customer_id
 
   const isCompleted =
     job.status === 'completed'
@@ -579,7 +723,9 @@ function JobDetailsPage() {
                       isSubmitting
                     }
                   >
-                    <BriefcaseBusiness size={18} />
+                    <BriefcaseBusiness
+                      size={18}
+                    />
 
                     {isSubmitting
                       ? 'Sending...'
@@ -616,7 +762,9 @@ function JobDetailsPage() {
                       isSubmitting
                     }
                   >
-                    <BriefcaseBusiness size={18} />
+                    <BriefcaseBusiness
+                      size={18}
+                    />
 
                     {isSubmitting
                       ? 'Sending...'
@@ -1046,162 +1194,373 @@ function JobDetailsPage() {
                     )}
                   </>
                 )}
-                                    <div className="job-details-payment">
 
-                      <div className="job-details-payment-header">
-                        <div>
-                          <span className="dashboard-panel-kicker">
-                            PAYMENT
-                          </span>
+                <div className="job-details-payment">
+                  <div className="job-details-payment-header">
+                    <div>
+                      <span className="dashboard-panel-kicker">
+                        PAYMENT
+                      </span>
 
-                          <h3>
-                            Complete the payment
-                          </h3>
+                      <h3>
+                        Complete the payment
+                      </h3>
 
-                          <p>
-                            Payment is based on the Job budget and
-                            can only be created after customer
-                            confirmation.
-                          </p>
-                        </div>
+                      <p>
+                        Payment is based on the Job budget and
+                        can only be created after customer
+                        confirmation.
+                      </p>
+                    </div>
 
-                        <div className="job-details-payment-amount">
+                    <div className="job-details-payment-amount">
+                      ₹
+                      {Number(
+                        work
+                          ? job.budget
+                          : 0,
+                      ).toLocaleString(
+                        'en-IN',
+                      )}
+                    </div>
+                  </div>
+
+                  {paymentLoading ? (
+                    <div className="job-details-payment-loading">
+                      <div className="dashboard-loading-spinner" />
+
+                      <span>
+                        Checking payment status...
+                      </span>
+                    </div>
+                  ) : !confirmation ? (
+                    <div className="job-details-payment-locked">
+                      <ShieldCheck size={18} />
+
+                      <div>
+                        <strong>
+                          Confirmation required
+                        </strong>
+
+                        <span>
+                          Confirm the completed work before
+                          creating its payment.
+                        </span>
+                      </div>
+                    </div>
+                  ) : !payment ? (
+                    <div className="job-details-payment-ready">
+                      <div>
+                        <strong>
+                          Payment ready
+                        </strong>
+
+                        <span>
+                          The backend will use the Job's
                           ₹
                           {Number(
-                            work
-                              ? job.budget
-                              : 0,
-                          ).toLocaleString('en-IN')}
-                        </div>
+                            job.budget,
+                          ).toLocaleString(
+                            'en-IN',
+                          )}{' '}
+                          budget as the payment amount.
+                        </span>
                       </div>
 
-                      {paymentLoading ? (
-                        <div className="job-details-payment-loading">
-                          <div className="dashboard-loading-spinner" />
+                      <button
+                        type="button"
+                        className="job-details-payment-button"
+                        onClick={
+                          handleCreatePayment
+                        }
+                        disabled={
+                          paymentSaving
+                        }
+                      >
+                        {paymentSaving
+                          ? 'Creating...'
+                          : 'Create payment'}
+                      </button>
+                    </div>
+                  ) : payment.status ===
+                    'pending' ? (
+                    <div className="job-details-payment-ready">
+                      <div>
+                        <strong>
+                          Payment pending
+                        </strong>
+
+                        <span>
+                          Payment record #
+                          {payment.id} is ready
+                          to be completed.
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="job-details-payment-button"
+                        onClick={
+                          handleMarkPaymentPaid
+                        }
+                        disabled={
+                          paymentSaving
+                        }
+                      >
+                        {paymentSaving
+                          ? 'Updating...'
+                          : 'Complete payment'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="job-details-payment-complete">
+                      <div className="job-details-payment-complete-icon">
+                        <CheckCircle2 size={19} />
+                      </div>
+
+                      <div>
+                        <span className="dashboard-panel-kicker">
+                          PAID
+                        </span>
+
+                        <strong>
+                          Payment completed
+                        </strong>
+
+                        <span>
+                          ₹
+                          {Number(
+                            payment.amount,
+                          ).toLocaleString(
+                            'en-IN',
+                          )}{' '}
+                          paid
+                          {payment.paid_at
+                            ? ` on ${formatDateTime(
+                                payment.paid_at,
+                              )}`
+                            : ''}
+                        </span>
+
+                        {payment.transaction_reference && (
+                          <span>
+                            Reference:{' '}
+                            {
+                              payment.transaction_reference
+                            }
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {isCompleted && (
+                  <div className="job-details-reputation">
+                    <div className="job-details-reputation-header">
+                      <div>
+                        <span className="dashboard-panel-kicker">
+                          REPUTATION
+                        </span>
+
+                        <h3>
+                          Rate this work
+                        </h3>
+
+                        <p>
+                          A completed and paid job can become part of
+                          the worker's verified professional history.
+                        </p>
+                      </div>
+
+                      <div className="job-details-reputation-badge">
+                        ★
+                      </div>
+                    </div>
+
+                    {reputationLoading ? (
+                      <div className="job-details-reputation-loading">
+                        <div className="dashboard-loading-spinner" />
+
+                        <span>
+                          Checking reputation status...
+                        </span>
+                      </div>
+                    ) : !payment ||
+                      payment.status !==
+                        'paid' ? (
+                      <div className="job-details-reputation-locked">
+                        <ShieldCheck size={18} />
+
+                        <div>
+                          <strong>
+                            Payment required
+                          </strong>
 
                           <span>
-                            Checking payment status...
+                            Complete the payment before rating this
+                            completed work.
                           </span>
                         </div>
-                      ) : !confirmation ? (
-                        <div className="job-details-payment-locked">
-                          <ShieldCheck size={18} />
-
-                          <div>
-                            <strong>
-                              Confirmation required
-                            </strong>
-
-                            <span>
-                              Confirm the completed work before
-                              creating its payment.
-                            </span>
-                          </div>
+                      </div>
+                    ) : reputation ? (
+                      <div className="job-details-reputation-complete">
+                        <div className="job-details-reputation-complete-icon">
+                          <CheckCircle2 size={19} />
                         </div>
-                      ) : !payment ? (
-                        <div className="job-details-payment-ready">
-                          <div>
-                            <strong>
-                              Payment ready
-                            </strong>
 
-                            <span>
-                              The backend will use the Job's
-                              ₹
-                              {Number(
-                                job.budget,
-                              ).toLocaleString('en-IN')}{' '}
-                              budget as the payment amount.
-                            </span>
-                          </div>
+                        <div className="job-details-reputation-complete-content">
+                          <span className="dashboard-panel-kicker">
+                            VERIFIED REPUTATION
+                          </span>
 
-                          <button
-                            type="button"
-                            className="job-details-payment-button"
-                            onClick={
-                              handleCreatePayment
-                            }
-                            disabled={
-                              paymentSaving
-                            }
-                          >
-                            {paymentSaving
-                              ? 'Creating...'
-                              : 'Create payment'}
-                          </button>
-                        </div>
-                      ) : payment.status === 'pending' ? (
-                        <div className="job-details-payment-ready">
-                          <div>
-                            <strong>
-                              Payment pending
-                            </strong>
+                          <strong>
+                            {Array.from(
+                              {
+                                length: 5,
+                              },
+                              (_, index) =>
+                                index <
+                                reputation.rating
+                                  ? '★'
+                                  : '☆',
+                            ).join(' ')}
+                          </strong>
 
-                            <span>
-                              Payment record #
-                              {payment.id} is ready
-                              to be completed.
-                            </span>
-                          </div>
+                          <span>
+                            {reputation.rating}/5
+                            customer rating
+                          </span>
 
-                          <button
-                            type="button"
-                            className="job-details-payment-button"
-                            onClick={
-                              handleMarkPaymentPaid
-                            }
-                            disabled={
-                              paymentSaving
-                            }
-                          >
-                            {paymentSaving
-                              ? 'Updating...'
-                              : 'Complete payment'}
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="job-details-payment-complete">
-                          <div className="job-details-payment-complete-icon">
-                            <CheckCircle2 size={19} />
-                          </div>
+                          {reputation.comment && (
+                            <p>
+                              {
+                                reputation.comment
+                              }
+                            </p>
+                          )}
 
-                          <div>
-                            <span className="dashboard-panel-kicker">
-                              PAID
-                            </span>
-
-                            <strong>
-                              Payment completed
-                            </strong>
-
-                            <span>
-                              ₹
-                              {Number(
-                                payment.amount,
-                              ).toLocaleString(
-                                'en-IN',
-                              )}{' '}
-                              paid
-                              {payment.paid_at
-                                ? ` on ${formatDateTime(
-                                    payment.paid_at,
-                                  )}`
-                                : ''}
-                            </span>
-
-                            {payment.transaction_reference && (
-                              <span>
-                                Reference:{' '}
-                                {
-                                  payment.transaction_reference
-                                }
-                              </span>
+                          <small>
+                            Submitted on{' '}
+                            {formatDateTime(
+                              reputation.created_at,
                             )}
-                          </div>
+                          </small>
                         </div>
-                      )}
+                      </div>
+                    ) : (
+                      <div className="job-details-reputation-form">
+                        <div className="job-details-reputation-rating-label">
+                          <span>
+                            Your rating
+                          </span>
 
-                    </div>
+                          <strong>
+                            {reputationRating >
+                            0
+                              ? `${reputationRating}/5`
+                              : 'Select a rating'}
+                          </strong>
+                        </div>
+
+                        <div
+                          className="job-details-reputation-stars"
+                          role="group"
+                          aria-label="Rate this work from 1 to 5 stars"
+                        >
+                          {[
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                          ].map(
+                            (rating) => (
+                              <button
+                                key={
+                                  rating
+                                }
+                                type="button"
+                                className={`job-details-reputation-star ${
+                                  rating <=
+                                  reputationRating
+                                    ? 'job-details-reputation-star-active'
+                                    : ''
+                                }`}
+                                onClick={() =>
+                                  setReputationRating(
+                                    rating,
+                                  )
+                                }
+                                disabled={
+                                  reputationSaving
+                                }
+                                aria-label={`${rating} out of 5 stars`}
+                              >
+                                ★
+                              </button>
+                            ),
+                          )}
+                        </div>
+
+                        <label
+                          htmlFor="customer-reputation-comment"
+                          className="job-details-reputation-label"
+                        >
+                          Optional review
+                        </label>
+
+                        <textarea
+                          id="customer-reputation-comment"
+                          className="job-details-reputation-textarea"
+                          value={
+                            reputationComment
+                          }
+                          onChange={(event) =>
+                            setReputationComment(
+                              event.target.value,
+                            )
+                          }
+                          placeholder="Share a short review about the completed work..."
+                          maxLength={2000}
+                          disabled={
+                            reputationSaving
+                          }
+                        />
+
+                        <div className="job-details-reputation-footer">
+                          <span>
+                            {
+                              reputationComment.length
+                            }{' '}
+                            / 2000
+                          </span>
+
+                          <button
+                            type="button"
+                            className="job-details-reputation-button"
+                            onClick={
+                              handleCreateReputation
+                            }
+                            disabled={
+                              reputationSaving ||
+                              reputationRating <
+                                1
+                            }
+                          >
+                            <CheckCircle2
+                              size={16}
+                            />
+
+                            {reputationSaving
+                              ? 'Submitting...'
+                              : 'Submit review'}
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </article>
             </section>
           )}
@@ -1220,7 +1579,10 @@ function formatStatus(status) {
     cancelled: 'Cancelled',
   }
 
-  return labels[status] || status
+  return (
+    labels[status] ||
+    status
+  )
 }
 
 function formatDate(value) {
@@ -1228,7 +1590,8 @@ function formatDate(value) {
     return 'Recently posted'
   }
 
-  const date = new Date(value)
+  const date =
+    new Date(value)
 
   if (
     Number.isNaN(
@@ -1253,7 +1616,8 @@ function formatDateTime(value) {
     return 'Not recorded'
   }
 
-  const date = new Date(value)
+  const date =
+    new Date(value)
 
   if (
     Number.isNaN(
@@ -1281,7 +1645,10 @@ function formatEvidenceType(type) {
   }
 
   return type
-    .replaceAll('_', ' ')
+    .replaceAll(
+      '_',
+      ' ',
+    )
     .replace(
       /\b\w/g,
       (letter) =>
