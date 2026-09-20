@@ -583,6 +583,19 @@ function JobInterestsPage() {
 
                           <button
                             type="button"
+                            className="dashboard-secondary-button job-interest-public-profile-button"
+                            onClick={() =>
+                              navigate(
+                                `/workers/${interest.worker_id}/profile`,
+                              )
+                            }
+                          >
+                            <ShieldCheck size={15} />
+                            Public Profile
+                          </button>
+
+                          <button
+                            type="button"
                             className={`dashboard-primary-button job-interest-select-button ${
                               isLocallySelected
                                 ? 'job-interest-select-button-selected'

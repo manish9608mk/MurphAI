@@ -333,3 +333,9 @@ export function createReputation(
     }),
   })
 }
+
+export function getWorkerPublicProfile(workerId) {
+  return request(`/workers/${workerId}/profile`, {
+    method: 'GET',
+  })
+}

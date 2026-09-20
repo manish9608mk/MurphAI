@@ -11,6 +11,10 @@ from backend.app.schemas.worker_history import (
     WorkerVerifiedHistoryResponse,
 )
 
+from backend.app.schemas.worker_profile import (
+    WorkerPublicProfileResponse,
+)
+
 from backend.app.services.worker_service import (
     create_worker,
     get_workers,
@@ -21,6 +25,10 @@ from backend.app.services.worker_service import (
 
 from backend.app.services.worker_history_service import (
     get_my_verified_history,
+)
+
+from backend.app.services.worker_profile_service import (
+    get_worker_public_profile,
 )
 
 from backend.app.core.dependencies import (
@@ -89,6 +97,28 @@ def get_my_worker_history(
     return get_my_verified_history(
         db=db,
         current_user_id=current_user_id,
+    )
+
+
+@router.get(
+    "/{worker_id}/profile",
+    response_model=WorkerPublicProfileResponse,
+)
+def get_public_worker_profile(
+    worker_id: int,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(get_current_user_id),
+):
+    """
+    Return public worker profile information.
+
+    Any authenticated user can view this profile.
+    Private payment and customer information is excluded.
+    """
+
+    return get_worker_public_profile(
+        db=db,
+        worker_id=worker_id,
     )
 
 
