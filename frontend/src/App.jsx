@@ -17,6 +17,7 @@ import JobDetailsPage from './pages/JobDetailsPage'
 import JobInterestsPage from './pages/JobInterestsPage'
 import WorkerAssignmentsPage from './pages/WorkerAssignmentsPage'
 import WorkerWorkPage from './pages/WorkerWorkPage'
+import WorkerHistoryPage from './pages/WorkerHistoryPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -76,6 +77,11 @@ function App() {
           <Route
             path="/works/:workId"
             element={<WorkerWorkPage />}
+          />
+
+          <Route
+            path="/workers/history"
+            element={<WorkerHistoryPage />}
           />
         </Route>
 

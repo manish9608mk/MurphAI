@@ -179,6 +179,12 @@ export function getMyWorks() {
   })
 }
 
+export function getMyVerifiedHistory() {
+  return request('/workers/me/history', {
+    method: 'GET',
+  })
+}
+
 export function createWork(
   assignmentId,
   description = null,

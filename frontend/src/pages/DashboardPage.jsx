@@ -675,6 +675,9 @@ function DashboardPage() {
               <button
                 type="button"
                 className="dashboard-quick-card"
+                onClick={() =>
+                  navigate('/workers/history')
+                }
               >
                 <div className="dashboard-quick-icon">
                   <ShieldCheck size={21} />
