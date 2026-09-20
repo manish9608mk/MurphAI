@@ -207,6 +207,9 @@ function DashboardPage() {
           <button
             type="button"
             className="dashboard-nav-item"
+            onClick={() =>
+              navigate('/jobs/mine')
+            }
           >
             <FolderKanban size={19} />
             <span>My Jobs</span>
@@ -460,6 +463,9 @@ function DashboardPage() {
                 <button
                   type="button"
                   className="dashboard-link-button"
+                  onClick={() =>
+                    navigate('/jobs/mine')
+                  }
                 >
                   View all
                   <ArrowRight size={16} />
@@ -673,6 +679,9 @@ function DashboardPage() {
               <button
                 type="button"
                 className="dashboard-quick-card"
+                onClick={() =>
+                  navigate('/jobs/mine')
+                }
               >
                 <div className="dashboard-quick-icon">
                   <FolderKanban size={21} />

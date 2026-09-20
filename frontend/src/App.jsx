@@ -21,6 +21,7 @@ import WorkerHistoryPage from './pages/WorkerHistoryPage'
 import WorkerPublicProfilePage from './pages/WorkerPublicProfilePage'
 import WorkerProfilePage from './pages/WorkerProfilePage'
 import BrowseWorkersPage from './pages/BrowseWorkersPage'
+import MyJobsPage from './pages/MyJobsPage'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -90,6 +91,11 @@ function App() {
           <Route
             path="/workers/discover"
             element={<BrowseWorkersPage />}
+          />
+
+          <Route
+            path="/jobs/mine"
+            element={<MyJobsPage />}
           />
 
           <Route
