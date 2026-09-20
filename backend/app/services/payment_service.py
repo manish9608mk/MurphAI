@@ -256,3 +256,51 @@ def get_payment(
         )
 
     return payment
+
+def get_payment_for_work(
+    db: Session,
+    work_id: int,
+    current_user_id: int,
+):
+    """
+    Get the payment connected to a Work record.
+
+    Only the customer or assigned worker can view it.
+    """
+
+    payment = (
+        db.query(Payment)
+        .filter(
+            Payment.work_id == work_id
+        )
+        .first()
+    )
+
+    if not payment:
+        raise PermissionDeniedException(
+            "Payment not found"
+        )
+
+    is_customer = (
+        payment.customer_id == current_user_id
+    )
+
+    worker = (
+        db.query(Worker)
+        .filter(
+            Worker.id == payment.worker_id
+        )
+        .first()
+    )
+
+    is_worker = (
+        worker is not None
+        and worker.user_id == current_user_id
+    )
+
+    if not is_customer and not is_worker:
+        raise PermissionDeniedException(
+            "You are not allowed to view this payment"
+        )
+
+    return payment

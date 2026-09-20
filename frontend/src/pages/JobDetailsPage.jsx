@@ -10,17 +10,21 @@ import {
   Paperclip,
   ShieldCheck,
 } from 'lucide-react'
+
 import { useNavigate, useParams } from 'react-router-dom'
 
 import {
   createConfirmation,
   createJobInterest,
+  createPayment,
   getConfirmationForWork,
   getCurrentUser,
   getEvidenceForWork,
   getJob,
   getMyJobInterests,
+  getPaymentForWork,
   getWorkByJob,
+  markPaymentAsPaid,
   withdrawJobInterest,
 } from '../services/api'
 
@@ -35,6 +39,11 @@ function JobDetailsPage() {
   const [evidence, setEvidence] = useState([])
 
   const [confirmation, setConfirmation] = useState(null)
+    const [payment, setPayment] = useState(null)
+  const [paymentLoading, setPaymentLoading] =
+    useState(true)
+  const [paymentSaving, setPaymentSaving] =
+    useState(false)
   const [confirmationComment, setConfirmationComment] =
     useState('')
   const [confirmationLoading, setConfirmationLoading] =
@@ -129,6 +138,24 @@ function JobDetailsPage() {
                 await getConfirmationForWork(
                   workData.id,
                 )
+                            try {
+              const paymentData =
+                await getPaymentForWork(
+                  workData.id,
+                )
+
+              if (!cancelled) {
+                setPayment(paymentData)
+              }
+            } catch {
+              if (!cancelled) {
+                setPayment(null)
+              }
+            } finally {
+              if (!cancelled) {
+                setPaymentLoading(false)
+              }
+            }
 
               if (!cancelled) {
                 setConfirmation(confirmationData)
@@ -205,6 +232,79 @@ function JobDetailsPage() {
       )
     } finally {
       setConfirmationSaving(false)
+    }
+  }
+
+    async function handleCreatePayment() {
+    if (
+      !work ||
+      work.status !== 'completed' ||
+      !confirmation ||
+      payment ||
+      paymentSaving
+    ) {
+      return
+    }
+
+    setActionError('')
+    setPaymentSaving(true)
+
+    try {
+      const result = await createPayment(
+        work.id,
+      )
+
+      setPayment(result)
+    } catch (err) {
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to create this payment.',
+      )
+    } finally {
+      setPaymentSaving(false)
+    }
+  }
+
+  async function handleMarkPaymentPaid() {
+    if (
+      !payment ||
+      payment.status !== 'pending' ||
+      paymentSaving
+    ) {
+      return
+    }
+
+    const confirmed = window.confirm(
+      `Mark the ₹${Number(
+        payment.amount,
+      ).toLocaleString(
+        'en-IN',
+      )} payment as paid?`,
+    )
+
+    if (!confirmed) {
+      return
+    }
+
+    setActionError('')
+    setPaymentSaving(true)
+
+    try {
+      const result =
+        await markPaymentAsPaid(
+          payment.id,
+        )
+
+      setPayment(result)
+    } catch (err) {
+      setActionError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to complete this payment.',
+      )
+    } finally {
+      setPaymentSaving(false)
     }
   }
 
@@ -946,6 +1046,162 @@ function JobDetailsPage() {
                     )}
                   </>
                 )}
+                                    <div className="job-details-payment">
+
+                      <div className="job-details-payment-header">
+                        <div>
+                          <span className="dashboard-panel-kicker">
+                            PAYMENT
+                          </span>
+
+                          <h3>
+                            Complete the payment
+                          </h3>
+
+                          <p>
+                            Payment is based on the Job budget and
+                            can only be created after customer
+                            confirmation.
+                          </p>
+                        </div>
+
+                        <div className="job-details-payment-amount">
+                          ₹
+                          {Number(
+                            work
+                              ? job.budget
+                              : 0,
+                          ).toLocaleString('en-IN')}
+                        </div>
+                      </div>
+
+                      {paymentLoading ? (
+                        <div className="job-details-payment-loading">
+                          <div className="dashboard-loading-spinner" />
+
+                          <span>
+                            Checking payment status...
+                          </span>
+                        </div>
+                      ) : !confirmation ? (
+                        <div className="job-details-payment-locked">
+                          <ShieldCheck size={18} />
+
+                          <div>
+                            <strong>
+                              Confirmation required
+                            </strong>
+
+                            <span>
+                              Confirm the completed work before
+                              creating its payment.
+                            </span>
+                          </div>
+                        </div>
+                      ) : !payment ? (
+                        <div className="job-details-payment-ready">
+                          <div>
+                            <strong>
+                              Payment ready
+                            </strong>
+
+                            <span>
+                              The backend will use the Job's
+                              ₹
+                              {Number(
+                                job.budget,
+                              ).toLocaleString('en-IN')}{' '}
+                              budget as the payment amount.
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="job-details-payment-button"
+                            onClick={
+                              handleCreatePayment
+                            }
+                            disabled={
+                              paymentSaving
+                            }
+                          >
+                            {paymentSaving
+                              ? 'Creating...'
+                              : 'Create payment'}
+                          </button>
+                        </div>
+                      ) : payment.status === 'pending' ? (
+                        <div className="job-details-payment-ready">
+                          <div>
+                            <strong>
+                              Payment pending
+                            </strong>
+
+                            <span>
+                              Payment record #
+                              {payment.id} is ready
+                              to be completed.
+                            </span>
+                          </div>
+
+                          <button
+                            type="button"
+                            className="job-details-payment-button"
+                            onClick={
+                              handleMarkPaymentPaid
+                            }
+                            disabled={
+                              paymentSaving
+                            }
+                          >
+                            {paymentSaving
+                              ? 'Updating...'
+                              : 'Complete payment'}
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="job-details-payment-complete">
+                          <div className="job-details-payment-complete-icon">
+                            <CheckCircle2 size={19} />
+                          </div>
+
+                          <div>
+                            <span className="dashboard-panel-kicker">
+                              PAID
+                            </span>
+
+                            <strong>
+                              Payment completed
+                            </strong>
+
+                            <span>
+                              ₹
+                              {Number(
+                                payment.amount,
+                              ).toLocaleString(
+                                'en-IN',
+                              )}{' '}
+                              paid
+                              {payment.paid_at
+                                ? ` on ${formatDateTime(
+                                    payment.paid_at,
+                                  )}`
+                                : ''}
+                            </span>
+
+                            {payment.transaction_reference && (
+                              <span>
+                                Reference:{' '}
+                                {
+                                  payment.transaction_reference
+                                }
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      )}
+
+                    </div>
               </article>
             </section>
           )}

@@ -4011,3 +4011,192 @@ button:not(:disabled):active {
     width: 100%;
   }
 }
+
+/* ---------- Customer Payment ---------- */
+
+.job-details-payment {
+  margin-top: 16px;
+  padding-top: 20px;
+  border-top: 1px solid var(--border-light);
+}
+
+.job-details-payment-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.job-details-payment-header h3 {
+  margin: 4px 0 0;
+  color: var(--text);
+  font-size: 16px;
+  letter-spacing: -0.025em;
+}
+
+.job-details-payment-header p {
+  max-width: 650px;
+  margin: 6px 0 0;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.job-details-payment-amount {
+  padding: 9px 12px;
+  border-radius: 10px;
+  color: var(--green);
+  background: var(--green-soft);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.job-details-payment-loading,
+.job-details-payment-locked {
+  margin-top: 14px;
+  min-height: 72px;
+  padding: 13px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--border-light);
+  border-radius: 13px;
+  background: var(--surface-secondary);
+  color: var(--text-muted);
+  font-size: 10px;
+}
+
+.job-details-payment-locked svg {
+  color: var(--text-muted);
+  flex: 0 0 auto;
+}
+
+.job-details-payment-locked strong,
+.job-details-payment-locked span {
+  display: block;
+}
+
+.job-details-payment-locked strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.job-details-payment-locked span {
+  margin-top: 3px;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.job-details-payment-ready {
+  margin-top: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border: 1px solid #c5e5d1;
+  border-radius: 14px;
+  background: var(--green-soft);
+}
+
+.job-details-payment-ready strong,
+.job-details-payment-ready span {
+  display: block;
+}
+
+.job-details-payment-ready strong {
+  color: var(--text);
+  font-size: 11px;
+}
+
+.job-details-payment-ready span {
+  margin-top: 3px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.job-details-payment-button {
+  min-height: 39px;
+  padding: 0 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  border: 1px solid var(--green);
+  border-radius: 999px;
+  color: #fff;
+  background: var(--green);
+  font-size: 10px;
+  font-weight: 700;
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    opacity 160ms ease;
+}
+
+.job-details-payment-button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.job-details-payment-button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.job-details-payment-complete {
+  margin-top: 14px;
+  padding: 14px;
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  border: 1px solid #c5e5d1;
+  border-radius: 14px;
+  background: var(--green-soft);
+}
+
+.job-details-payment-complete-icon {
+  width: 36px;
+  height: 36px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  color: var(--green);
+  background: var(--surface);
+}
+
+.job-details-payment-complete strong,
+.job-details-payment-complete span {
+  display: block;
+}
+
+.job-details-payment-complete strong {
+  margin-top: 4px;
+  color: var(--green);
+  font-size: 12px;
+}
+
+.job-details-payment-complete span {
+  margin-top: 3px;
+  color: var(--text-secondary);
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+@media (max-width: 760px) {
+  .job-details-payment-header {
+    flex-direction: column;
+  }
+
+  .job-details-payment-ready {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .job-details-payment-button {
+    width: 100%;
+  }
+}

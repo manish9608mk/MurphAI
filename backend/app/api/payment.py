@@ -15,6 +15,7 @@ from backend.app.services.payment_service import (
     create_payment,
     mark_payment_as_paid,
     get_payment,
+    get_payment_for_work,
 )
 
 
@@ -72,6 +73,26 @@ def complete_payment(
         current_user_id=current_user_id,
     )
 
+@router.get(
+    "/work/{work_id}",
+    response_model=PaymentResponse,
+)
+def get_payment_for_work_route(
+    work_id: int,
+    db: Session = Depends(get_db),
+    current_user_id: int = Depends(
+        get_current_user_id
+    ),
+):
+    """
+    Get the payment connected to a Work record.
+    """
+
+    return get_payment_for_work(
+        db=db,
+        work_id=work_id,
+        current_user_id=current_user_id,
+    )
 
 @router.get(
     "/{payment_id}",

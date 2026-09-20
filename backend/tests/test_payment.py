@@ -943,3 +943,219 @@ def test_payment_is_saved_in_database(client, db):
     assert payment.amount == 1500
     assert payment.status == "pending"
     assert payment.transaction_reference == "DB-TEST-123"
+
+def test_customer_can_get_payment_for_work(client):
+    register_user(
+        client,
+        "Customer",
+        "customer@example.com",
+    )
+
+    register_user(
+        client,
+        "Worker",
+        "worker@example.com",
+    )
+
+    customer_token = login_user(
+        client,
+        "customer@example.com",
+    )
+
+    worker_token = login_user(
+        client,
+        "worker@example.com",
+    )
+
+    work_id = create_completed_work(
+        client,
+        customer_token,
+        worker_token,
+    )
+
+    confirm_work(
+        client,
+        customer_token,
+        work_id,
+    )
+
+    create_response = client.post(
+        "/payments/",
+        headers=auth_headers(customer_token),
+        json={
+            "work_id": work_id,
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    response = client.get(
+        f"/payments/work/{work_id}",
+        headers=auth_headers(customer_token),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["work_id"] == work_id
+
+
+def test_worker_can_get_payment_for_work(client):
+    register_user(
+        client,
+        "Customer",
+        "customer@example.com",
+    )
+
+    register_user(
+        client,
+        "Worker",
+        "worker@example.com",
+    )
+
+    customer_token = login_user(
+        client,
+        "customer@example.com",
+    )
+
+    worker_token = login_user(
+        client,
+        "worker@example.com",
+    )
+
+    work_id = create_completed_work(
+        client,
+        customer_token,
+        worker_token,
+    )
+
+    confirm_work(
+        client,
+        customer_token,
+        work_id,
+    )
+
+    create_response = client.post(
+        "/payments/",
+        headers=auth_headers(customer_token),
+        json={
+            "work_id": work_id,
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    response = client.get(
+        f"/payments/work/{work_id}",
+        headers=auth_headers(worker_token),
+    )
+
+    assert response.status_code == 200
+    assert response.json()["work_id"] == work_id
+
+
+def test_unrelated_user_cannot_get_payment_for_work(client):
+    register_user(
+        client,
+        "Customer",
+        "customer@example.com",
+    )
+
+    register_user(
+        client,
+        "Worker",
+        "worker@example.com",
+    )
+
+    register_user(
+        client,
+        "Other User",
+        "other-payment@example.com",
+    )
+
+    customer_token = login_user(
+        client,
+        "customer@example.com",
+    )
+
+    worker_token = login_user(
+        client,
+        "worker@example.com",
+    )
+
+    other_token = login_user(
+        client,
+        "other-payment@example.com",
+    )
+
+    work_id = create_completed_work(
+        client,
+        customer_token,
+        worker_token,
+    )
+
+    confirm_work(
+        client,
+        customer_token,
+        work_id,
+    )
+
+    create_response = client.post(
+        "/payments/",
+        headers=auth_headers(customer_token),
+        json={
+            "work_id": work_id,
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    response = client.get(
+        f"/payments/work/{work_id}",
+        headers=auth_headers(other_token),
+    )
+
+    assert response.status_code == 403
+
+
+def test_get_payment_for_work_requires_existing_payment(
+    client,
+):
+    register_user(
+        client,
+        "Customer",
+        "customer@example.com",
+    )
+
+    register_user(
+        client,
+        "Worker",
+        "worker@example.com",
+    )
+
+    customer_token = login_user(
+        client,
+        "customer@example.com",
+    )
+
+    worker_token = login_user(
+        client,
+        "worker@example.com",
+    )
+
+    work_id = create_completed_work(
+        client,
+        customer_token,
+        worker_token,
+    )
+
+    confirm_work(
+        client,
+        customer_token,
+        work_id,
+    )
+
+    response = client.get(
+        f"/payments/work/{work_id}",
+        headers=auth_headers(customer_token),
+    )
+
+    assert response.status_code == 403

@@ -278,3 +278,31 @@ export function createConfirmation(
     }),
   })
 }
+
+export function getPaymentForWork(workId) {
+  return request(`/payments/work/${workId}`, {
+    method: 'GET',
+  })
+}
+
+export function createPayment(
+  workId,
+  transactionReference = null,
+) {
+  return request('/payments/', {
+    method: 'POST',
+    body: JSON.stringify({
+      work_id: workId,
+      transaction_reference: transactionReference,
+    }),
+  })
+}
+
+export function markPaymentAsPaid(paymentId) {
+  return request(
+    `/payments/${paymentId}/paid`,
+    {
+      method: 'PATCH',
+    },
+  )
+}
