@@ -13,6 +13,7 @@ from backend.app.models.work import Work
 
 def discover_workers(
     db: Session,
+    current_user_id: int,
     search: str | None = None,
     location: str | None = None,
     skill: str | None = None,
@@ -35,6 +36,7 @@ def discover_workers(
     query = (
         db.query(Worker)
         .join(User, User.id == Worker.user_id)
+        .filter(Worker.user_id != current_user_id)
     )
 
     if search:

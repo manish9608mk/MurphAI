@@ -104,6 +104,7 @@ def discover_worker_directory(
 
     return discover_workers(
         db=db,
+        current_user_id=current_user_id,
         search=search,
         location=location,
         skill=skill,

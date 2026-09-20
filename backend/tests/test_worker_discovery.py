@@ -534,3 +534,51 @@ def test_worker_discovery_excludes_private_payment_data(
     assert "payment_id" not in worker_data
     assert "amount" not in worker_data
     assert "transaction_reference" not in worker_data
+
+
+def test_worker_discovery_excludes_current_users_worker_profile(
+    client,
+    db,
+):
+    viewer = create_user(
+        db,
+        "Ayush",
+        "ayush-self-discovery@example.com",
+    )
+
+    other_user = create_user(
+        db,
+        "Rahul",
+        "rahul-self-discovery@example.com",
+    )
+
+    create_worker(
+        db,
+        viewer,
+        "Ayush electrician",
+        "Bhopal",
+        2,
+        True,
+    )
+
+    other_worker = create_worker(
+        db,
+        other_user,
+        "Rahul electrician",
+        "Indore",
+        4,
+        True,
+    )
+
+    response = client.get(
+        "/workers/discover",
+        headers=auth_headers(viewer.id),
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["total"] == 1
+    assert data["workers"][0]["worker_id"] == other_worker.id
+    assert data["workers"][0]["name"] == "Rahul"
