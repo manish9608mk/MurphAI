@@ -1,7 +1,13 @@
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from backend.app.models.user import User
 from backend.app.schemas.auth import UserRegister, UserLogin
+
+from backend.app.core.exceptions import (
+    EmailAlreadyRegisteredException,
+)
+
 from backend.app.core.security import (
     hash_password,
     verify_password,
@@ -20,8 +26,14 @@ def register_user(
     )
 
     db.add(user)
-    db.commit()
-    db.refresh(user)
+
+    try:
+        db.commit()
+        db.refresh(user)
+
+    except IntegrityError:
+        db.rollback()
+        raise EmailAlreadyRegisteredException()
 
     return user
 
