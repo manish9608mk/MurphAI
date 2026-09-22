@@ -33,10 +33,6 @@ def create_user(db: Session, user_data: UserCreate):
     return user
 
 
-def get_users(db: Session):
-    return db.query(User).all()
-
-
 def get_user(db: Session, user_id: int):
     user = (
         db.query(User)

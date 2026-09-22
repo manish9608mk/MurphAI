@@ -2,14 +2,11 @@ from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from backend.app.schemas.user import (
-    UserCreate,
     UserUpdate,
     UserResponse,
 )
 
 from backend.app.services.user_service import (
-    create_user,
-    get_users,
     get_user,
     update_user,
     delete_user,
@@ -29,39 +26,15 @@ router = APIRouter(
 )
 
 
-@router.post(
-    "/",
-    response_model=UserResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-def register_user(
-    user_data: UserCreate,
-    db: Session = Depends(get_db),
-):
-    return create_user(
-        db,
-        user_data,
-    )
-
-
-@router.get(
-    "/",
-    response_model=list[UserResponse],
-)
-def get_all_users(
-    db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id),
-):
-    return get_users(db)
-
-
 @router.get(
     "/me",
     response_model=UserResponse,
 )
 def get_current_user(
     db: Session = Depends(get_db),
-    current_user_id: int = Depends(get_current_user_id),
+    current_user_id: int = Depends(
+        get_current_user_id
+    ),
 ):
     return get_user(
         db,

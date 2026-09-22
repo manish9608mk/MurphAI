@@ -24,7 +24,7 @@ def create_user(client, name, email, password="password123"):
     """
 
     return client.post(
-        "/users/",
+        "/auth/register",
         json={
             "name": name,
             "email": email,

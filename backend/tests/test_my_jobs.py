@@ -5,7 +5,7 @@ def register_and_login(
     password,
 ):
     register_response = client.post(
-        "/users/",
+        "/auth/register",
         json={
             "name": name,
             "email": email,

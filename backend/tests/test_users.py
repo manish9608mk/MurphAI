@@ -1,7 +1,7 @@
 def register_and_login(client, name, email, password):
     # Register
     register_response = client.post(
-        "/users/",
+        "/auth/register",
         json={
             "name": name,
             "email": email,
@@ -27,32 +27,6 @@ def register_and_login(client, name, email, password):
     return {
         "Authorization": f"Bearer {token}"
     }
-
-
-# =========================
-# GET ALL USERS
-# =========================
-
-def test_get_users(client):
-    headers = register_and_login(
-        client,
-        "Manish",
-        "manish@example.com",
-        "TestPassword123",
-    )
-
-    response = client.get(
-        "/users/",
-        headers=headers,
-    )
-
-    assert response.status_code == 200
-
-    data = response.json()
-
-    assert len(data) == 1
-    assert data[0]["name"] == "Manish"
-    assert data[0]["email"] == "manish@example.com"
 
 
 # =========================
@@ -96,7 +70,7 @@ def test_cannot_get_other_user(client):
 
     # User 2
     client.post(
-        "/users/",
+        "/auth/register",
         json={
             "name": "Rahul",
             "email": "rahul@example.com",
@@ -163,7 +137,7 @@ def test_cannot_update_other_user(client):
 
     # User 2
     client.post(
-        "/users/",
+        "/auth/register",
         json={
             "name": "Rahul",
             "email": "rahul@example.com",
@@ -231,7 +205,7 @@ def test_cannot_delete_other_user(client):
 
     # User 2
     client.post(
-        "/users/",
+        "/auth/register",
         json={
             "name": "Rahul",
             "email": "rahul@example.com",

@@ -3,7 +3,7 @@ from backend.app.models.confirmation import Confirmation
 
 def register_user(client, name, email, password="password123"):
     response = client.post(
-        "/users/",
+        "/auth/register",
         json={
             "name": name,
             "email": email,

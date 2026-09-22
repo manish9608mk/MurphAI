@@ -5,7 +5,7 @@ from backend.app.models.payment import Payment
 
 def register_user(client, name, email, password="password123"):
     response = client.post(
-        "/users/",
+        "/auth/register",
         json={
             "name": name,
             "email": email,
