@@ -30,3 +30,5 @@ mlruns/
 
 # Node
 node_modules/
+# Database backups
+*.db.backup
