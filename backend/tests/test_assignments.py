@@ -1107,3 +1107,65 @@ def test_unrelated_user_cannot_view_assignment(
     )
 
     assert response.status_code == 403
+
+# ============================================================
+# TEST 21
+# Another worker cannot reject another worker's assignment
+# ============================================================
+
+def test_other_worker_cannot_reject_assignment(
+    client,
+    db,
+):
+    customer_id = create_test_user(
+        db,
+        "Customer Twenty One",
+        "customer21@example.com",
+    )
+
+    assigned_worker_id = create_test_user(
+        db,
+        "Assigned Worker",
+        "assignedworker21@example.com",
+    )
+
+    other_worker_id = create_test_user(
+        db,
+        "Other Worker Twenty One",
+        "otherworker21@example.com",
+    )
+
+    worker_id = create_worker(
+        client,
+        assigned_worker_id,
+    )
+
+    create_worker(
+        client,
+        other_worker_id,
+    )
+
+    job_id = create_job(
+        client,
+        customer_id,
+    )
+
+    create_response = client.post(
+        "/assignments/",
+        headers=auth_headers(customer_id),
+        json={
+            "job_id": job_id,
+            "worker_id": worker_id,
+        },
+    )
+
+    assert create_response.status_code == 201
+
+    assignment_id = create_response.json()["id"]
+
+    response = client.patch(
+        f"/assignments/{assignment_id}/reject",
+        headers=auth_headers(other_worker_id),
+    )
+
+    assert response.status_code == 403
